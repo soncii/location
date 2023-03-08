@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Location System</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.1.0/css/bootstrap.min.css}">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Location System</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Locations</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/friends">Friends</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Welcome to Location System</h3>
+                </div>
+                <div class="card-body">
+                    <p>This is a web application that allows you to manage your locations and share them with friends.</p>
+                    <p>To get started, please log in or create an account.</p>
+                    <a href="/login" class="btn btn-primary">Log In</a>
+                    <a href="/register" class="btn btn-secondary">Register</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.1.0/js/bootstrap.min.js}"></script>
+
+</body>
+</html>
