@@ -18,7 +18,7 @@ public class LocationDTO {
     private String name;
 
     private String address;
-
+    private List<Access> permissions;
     public LocationDTO(Location l) {
         this.id=l.getLid();
         this.uid=l.getUid();
@@ -27,5 +27,4 @@ public class LocationDTO {
         this.permissions = new ArrayList<>();
     }
 
-    private List<Access> permissions;
 }
