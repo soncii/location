@@ -35,7 +35,7 @@ public class MainController {
         return "locations";
     }
     @GetMapping("/login")
-    public String login() {
+    public String login(Model model) {
         return "login";
     }
     @PostMapping("/login")

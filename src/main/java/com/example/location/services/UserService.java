@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class UserService {
@@ -31,11 +33,19 @@ public class UserService {
 
     public Optional<User> authorize(String email, String password) {
         if (email==null || password ==null) return Optional.empty();
+        if (!isValidEmail(email)) return Optional.empty() ;
         return userRepository.findByEmailAndPassword(email, password);
     }
-
+    public boolean isValidEmail(String email) {
+        String regex = "^[a-zA-Z0-9_+&*-]+(?:\\." +
+                "[a-zA-Z0-9_+&*-]+)*@" +
+                "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
+                "A-Z]{2,7}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
+    }
     public boolean authorizeOwner(String uidString, Long lid) {
-        if (uidString.equals("empty")) return false;
         Long uid;
         try {
             uid = Long.parseLong(uidString);
@@ -44,5 +54,10 @@ public class UserService {
         }
         Optional<Location> byIdAndLid = locationRepository.findByUidAndLid(uid, lid);
         return byIdAndLid.isPresent();
+    }
+
+    public UserService(UserRepository userRepository, LocationRepository locationRepository) {
+        this.userRepository = userRepository;
+        this.locationRepository = locationRepository;
     }
 }

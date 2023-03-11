@@ -20,7 +20,7 @@ import java.util.Optional;
 public interface AccessRepository extends JpaRepository< Access,Long> {
     List<Access> findAllByLid(Long lid);
     @Query(nativeQuery = true, name = "getUserAccessByLocationId")
-    List<UserAccessDto> getUserAccessByLocationId(Long lid);
+    List<UserAccessDto> getUserAccessByLocationId(@Param("lid")Long lid);
     Integer deleteByUidAndLid(Long uid, Long lid);
     Optional<Access> findByUidAndLid(Long uid,Long lid);
 

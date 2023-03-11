@@ -22,6 +22,12 @@ public class AccessService {
     public Optional<Access> saveAccess(String email, String shareMode, Long lid) {
         Optional<User> user = userRepository.findByEmail(email);
         if (user.isPresent()) {
+            Optional<Access> accessFromRepository = accessRepository.findByUidAndLid(user.get().getUid(), lid);
+            if (accessFromRepository.isPresent()) {
+                Access saving = accessFromRepository.get();
+                if (!saving.getType().equals(shareMode)) saving.setType(shareMode);
+                return Optional.of(accessRepository.save(saving));
+            }
             Access access = new Access();
             access.setUid(user.get().getUid());
             access.setLid(lid);
@@ -39,8 +45,7 @@ public class AccessService {
     public boolean delete(Long uid, Long lid, String email) {
         Optional<User> user = userRepository.findByEmail(email);
         if (user.isPresent()) {
-            System.out.println("uid: "+ user.get().getUid() +" lid: "+ lid);
-            return accessRepository.deleteByUidAndLid(user.get().getUid(), lid)==1;
+            return accessRepository.deleteByUidAndLid(user.get().getUid(), lid)!=null;
         } else return false;
     }
 
@@ -48,7 +53,6 @@ public class AccessService {
         Optional<User> user = userRepository.findByEmail(email);
         if (!user.isPresent()) return false;
         Long uid = user.get().getUid();
-        System.out.println("uid: " + uid + " lid: " + lid);
         Optional<Access> byUidAndLid = accessRepository.findByUidAndLid(uid, lid);
         if (!byUidAndLid.isPresent()) return false;
         Access access = changeAccess(byUidAndLid.get());
@@ -60,5 +64,10 @@ public class AccessService {
         else a.setType(ACCESS_ADMIN);
         return a;
 
+    }
+
+    public AccessService(AccessRepository accessRepository, UserRepository userRepository) {
+        this.accessRepository = accessRepository;
+        this.userRepository = userRepository;
     }
 }

@@ -64,6 +64,8 @@ public class LocationController {
     @PostMapping("/location/unfriend")
     public ResponseEntity<String> unfriend(@RequestParam("lid") Long lid, @RequestParam("email") String email,
                            @CookieValue(value = "user", defaultValue = "empty") String uidString) {
+
+
         if (!userService.authorizeOwner(uidString, lid)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not authorized to perform this action.");
         }

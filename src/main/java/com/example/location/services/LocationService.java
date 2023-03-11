@@ -25,18 +25,24 @@ public class LocationService {
 
     public List<LocationDTO> findUserLocations(String uidString) {
         Long uid = Long.parseLong(uidString);
-        List<Location> locations = locationRepository.findAllByUid(uid);
-
         List<LocationDTO> result = new ArrayList<>();
-        for (Location l:locations) {
-            LocationDTO dto = new LocationDTO(l);
-            dto.setPermissions(accessRepository.findAllByLid(l.getLid()));
-            result.add(dto);
+        List<Location> locations = locationRepository.findAllByUid(uid);
+        if (locations!=null) {
+            for (Location l : locations) {
+                LocationDTO dto = new LocationDTO(l);
+                dto.setPermissions(accessRepository.findAllByLid(l.getLid()));
+                result.add(dto);
+            }
         }
         return result;
     }
     public Location saveLocation(String uid, String name, String address) {
-        if (uid.equals("empty") || !userRepository.findById(Long.parseLong(uid)).isPresent()) return null;
+        try {
+            Long l = Long.parseLong(uid);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        if (!userRepository.findById(Long.parseLong(uid)).isPresent()) return null;
         Location location = new Location();
         location.setUid(Long.parseLong(uid));
         location.setName(name);
@@ -58,5 +64,11 @@ public class LocationService {
             allSharedLocation.add(sharedLocation);
         }
         return allSharedLocation;
+    }
+
+    public LocationService(LocationRepository locationRepository, AccessRepository accessRepository, UserRepository userRepository) {
+        this.locationRepository = locationRepository;
+        this.accessRepository = accessRepository;
+        this.userRepository = userRepository;
     }
 }

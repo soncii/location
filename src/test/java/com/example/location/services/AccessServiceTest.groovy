@@ -1,4 +1,4 @@
-package com.example.location
+package com.example.location.services
 
 import com.example.location.dto.UserAccessDto
 import com.example.location.entities.Access
@@ -13,15 +13,18 @@ import java.util.List
 import java.util.Optional
 
 class AccessServiceTest extends Specification {
-    UserRepository userRepository = Mock(UserRepository)
-    AccessRepository accessRepository = Mock(AccessRepository)
-    AccessService accessService = new AccessService(userRepository, accessRepository)
+    UserRepository userRepository = Mock()
+    AccessRepository accessRepository = Mock()
+    AccessService accessService = new AccessService(accessRepository, userRepository)
     Long lid = 1L
     String email = "test@example.com"
     User user = new User(email: email, uid: 1L)
     Access access = new Access(aid: 1L, uid: 1L, lid: 1L, type: "admin")
 
     def setup() {
+//        userRepository = Mock(UserRepository)
+//        accessRepository = Mock(AccessRepository)
+       // accessService = Mock(AccessService)
         userRepository.findByEmail(email) >> Optional.of(user)
         accessRepository.findByUidAndLid(user.uid, lid) >> Optional.of(access)
     }
@@ -37,7 +40,7 @@ class AccessServiceTest extends Specification {
         where:
         shareMode | aid
         "admin"   | 1L
-        "read-only" | 2L
+        "read-only" | 1L
     }
 
     def "getUsersOnLocation returns user access dto list"() {
@@ -45,7 +48,7 @@ class AccessServiceTest extends Specification {
         accessRepository.getUserAccessByLocationId(lid) >> [new UserAccessDto(email: email, accessType: "admin")]
 
         expect:
-        accessService.getUsersOnLocation(lid) == [new UserAccessDto(email: email, accessType: "admin")]
+        accessService.getUsersOnLocation(lid)  == [new UserAccessDto(email: email, accessType: "admin")]
     }
 
     def "delete returns true when deleteByUidAndLid returns 1"() {

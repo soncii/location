@@ -10,8 +10,8 @@ import java.util.List;
 @Entity
 @Table(name = "access")
 @NamedNativeQuery(name="getUserAccessByLocationId",query = "SELECT u.firstName AS firstName, u.lastName AS lastName, u.email AS email, a.type AS accessType " +
-        "FROM Access a " +
-        "JOIN Users u ON u.uid = a.uid " +
+        "FROM access a " +
+        "JOIN users u ON u.uid = a.uid " +
         "WHERE a.lid = :lid", resultSetMapping = "locationMap")
 @SqlResultSetMapping(name="locationMap", classes = @ConstructorResult(targetClass = UserAccessDto.class, columns = {
         @ColumnResult(name="firstName", type=String.class),

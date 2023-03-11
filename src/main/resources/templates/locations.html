@@ -43,7 +43,7 @@
             <tr>
               <th>Name</th>
               <th>Address</th>
-              <th>Permissions</th>
+              <th>Shared with</th>
               <th>Actions</th>
             </tr>
             </thead>
@@ -52,14 +52,8 @@
             <tr th:each="location : ${locations}">
               <td th:text="${location.name}"></td>
               <td th:text="${location.address}"></td>
-              <td>
+              <td th:text="${location.permissions.size() + ' users'}">
                 <!-- Display the permissions for this location -->
-                <ul>
-                  <li th:each="permission : ${location.permissions}">
-                    <span th:text="${permission.uid}"></span>
-                    <span th:text="' (' + ${permission.type} + ')'"></span>
-                  </li>
-                </ul>
               </td>
               <td>
                 <!-- Add a button to share the location with a friend -->

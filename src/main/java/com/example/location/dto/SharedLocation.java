@@ -23,6 +23,9 @@ public class SharedLocation {
         this.accessType = accessType;
     }
 
+    public SharedLocation() {
+    }
+
     public SharedLocation(Location l, String email) {
         this.lid= l.getLid();
         this.email=email;
