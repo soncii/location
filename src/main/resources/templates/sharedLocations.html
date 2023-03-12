@@ -62,10 +62,12 @@
               <td >
                 <!-- Add a button to share the location with a friend -->
                 <div class="btn-group-vertical">
-                  <div th:if="${location.accessType=='admin' || location.accessType=='owner'}">
+                  <div th:if="${location.accessType=='owner'}">
                   <a th:href="@{/locations/{id}(id=${location.lid})}">
                     <button type="button" class="btn btn-success btn-sm" >View</button>
                   </a>
+                  </div>
+                  <div th:if="${location.accessType=='admin' || location.accessType=='owner'}">
                   <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#shareLocationModal"
                           th:attr="data-location-id=${location.lid}">Share Location</button>
                   </div>
