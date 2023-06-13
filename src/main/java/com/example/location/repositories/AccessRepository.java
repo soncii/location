@@ -15,13 +15,12 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-@Transactional
-public interface AccessRepository extends JpaRepository< Access,Long> {
+public interface AccessRepository {
     List<Access> findAllByLid(Long lid);
     @Query(nativeQuery = true, name = "getUserAccessByLocationId")
     List<UserAccessDto> getUserAccessByLocationId(@Param("lid")Long lid);
     Integer deleteByUidAndLid(Long uid, Long lid);
     Optional<Access> findByUidAndLid(Long uid,Long lid);
 
+    Access save(Access a);
 }
