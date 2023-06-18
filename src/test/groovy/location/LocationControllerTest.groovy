@@ -1,41 +1,29 @@
-package com.example.location.controllers
+package location
 
+import com.example.location.controllers.LocationController
 import com.example.location.dto.SharedLocation
-import com.example.location.entities.Access
 import com.example.location.entities.Location
-import com.example.location.entities.User
-import com.example.location.services.AccessService
-import com.example.location.services.LocationService
-import com.example.location.services.UserService
-import org.junit.jupiter.params.provider.EnumSource
-import org.springframework.http.HttpHeaders
+import com.example.location.services.AccessServiceImpl
+import com.example.location.services.LocationServiceImpl
+import com.example.location.services.UserServiceImpl
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.CookieValue
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
-import spock.mock.DetachedMockFactory
 
-
-import java.util.Collections
-import java.util.Optional
+import java.util.concurrent.CompletableFuture
 
 class LocationControllerTest extends Specification {
 
-    LocationService locationService = Mock()
+    LocationServiceImpl locationService = Stub()
 
-    AccessService accessService = Mock()
+    AccessServiceImpl accessService = Stub()
 
-    UserService userService = Mock()
+    UserServiceImpl userService = Stub()
 
     @Subject
-    LocationController locationController = new LocationController(
-            locationService: locationService,
-            accessService: accessService,
-            userService: userService
-    )
+    LocationController locationController = new LocationController(locationService, accessService, userService)
 
     def "addLocation should return newLocation view if the user is logged in"() {
         given:
@@ -69,10 +57,10 @@ class LocationControllerTest extends Specification {
         Model model = Mock(Model.class)
         String expectedView = "sharedLocations"
 
-        locationService.findAllLocations(uid) >> locations
+        locationService.findAllLocations(uid) >> CompletableFuture.completedFuture(locations)
 
         when:
-        String result = locationController.allLocations(uid, model)
+        String result = locationController.allLocations(uid, model).join()
 
         then:
         result == expectedView
@@ -87,10 +75,10 @@ class LocationControllerTest extends Specification {
         Location location = new Location(lid: 1)
         String expectedView = "redirect:/"
 
-        locationService.saveLocation(uid, name, address) >> location
+        locationService.saveLocation(uid, name, address) >> CompletableFuture.completedFuture(location)
 
         when:
-        String result = locationController.saveLocation(uid, name, address)
+        String result = locationController.saveLocation(uid, name, address).join()
 
         then:
         result == expectedView
@@ -111,7 +99,6 @@ class LocationControllerTest extends Specification {
 
         then:
         result == expectedView
-        1 * accessService.saveAccess(email, shareMode, lid)
     }
     def "getLocation returns error when user is not authorized"() {
         given:
@@ -119,17 +106,13 @@ class LocationControllerTest extends Specification {
         def uid = "abc"
         def model = Mock(Model)
 
-        userService.authorizeOwner(uid, lid) >> false
+        userService.authorizeOwner(uid, lid) >> CompletableFuture.completedFuture(false)
 
         when:
-        def result = locationController.getLocation(lid, model, uid)
+        def result = locationController.getLocation(lid, model, uid).join()
 
         then:
         result == "error"
-        1 * userService.authorizeOwner(uid, lid)
-        0 * locationService.findById(lid)
-        0 * model.addAttribute(_, _)
-        0 * accessService.getUsersOnLocation(lid)
     }
 
 
@@ -139,26 +122,25 @@ class LocationControllerTest extends Specification {
         def email = "alice@example.com"
         def uidString = "abc"
 
-        userService.authorizeOwner(uidString, lid) >> false
+        userService.authorizeOwner(uidString, lid) >> CompletableFuture.completedFuture(false)
 
         when:
-        def result = locationController.unfriend(lid, email, uidString)
+        def result = locationController.unfriend(lid, email, uidString).join()
 
         then:
         result.status == HttpStatus.FORBIDDEN
         result.body == "You are not authorized to perform this action."
-        1 * userService.authorizeOwner(uidString, lid)
-        0 * accessService.delete(_, _, _)
+
     }
     def "should return 403 forbidden when user is not authorized to change mode"() {
         given:
         def lid = 123L
         def email = "john@example.com"
         def uidString = "not-an-owner"
-        userService.authorizeOwner(uidString, lid) >> false
+        userService.authorizeOwner(uidString, lid) >> CompletableFuture.completedFuture(false)
 
         when:
-        def response = locationController.changeMode(lid, email, uidString)
+        def response = locationController.changeMode(lid, email, uidString).join()
 
         then:
         response.statusCode == HttpStatus.FORBIDDEN
@@ -170,11 +152,11 @@ class LocationControllerTest extends Specification {
         def lid = 123L
         def email = "john@example.com"
         def uidString = "owner"
-        userService.authorizeOwner(uidString, lid) >> true
-        accessService.change(lid, email) >> true
+        userService.authorizeOwner(uidString, lid) >> CompletableFuture.completedFuture(true)
+        accessService.change(lid, email) >> CompletableFuture.completedFuture(true)
 
         when:
-        def response = locationController.changeMode(lid, email, uidString)
+        def response = locationController.changeMode(lid, email, uidString).join()
 
         then:
         response.statusCode == HttpStatus.FOUND

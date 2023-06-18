@@ -6,10 +6,14 @@ import com.example.location.dto.UserAccessDto;
 import com.example.location.repositories.LocationRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,9 +52,21 @@ public class LocationRepositoryImpl implements LocationRepository {
     @Override
     public Location save(Location l) {
         String sql = "INSERT INTO location (uid, name, address) VALUES (?, ?, ?)";
-        jdbcTemplate.update(sql, l.getUid(), l.getName(), l.getAddress());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, l.getUid());
+            ps.setString(2, l.getName());
+            ps.setString(3, l.getAddress());
+            return ps;
+        }, keyHolder);
+
+        Long lid = keyHolder.getKey().longValue();
+        l.setLid(lid);
+
         return l;
     }
+
 
     @Override
     public Optional<Location> findById(Long uid) {

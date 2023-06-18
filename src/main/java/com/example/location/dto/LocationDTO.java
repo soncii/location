@@ -27,4 +27,11 @@ public class LocationDTO {
         this.permissions = new ArrayList<>();
     }
 
+    public LocationDTO(Location l, List<Access> arrayList) {
+        this.id=l.getLid();
+        this.uid=l.getUid();
+        this.name=l.getName();
+        this.address=l.getAddress();
+        this.permissions=arrayList;
+    }
 }

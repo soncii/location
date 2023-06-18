@@ -2,14 +2,10 @@ package com.example.location.repositories;
 
 import com.example.location.dto.UserAccessDto;
 import com.example.location.entities.Access;
-import com.example.location.entities.User;
-import com.example.location.repositories.AccessRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +26,7 @@ public class AccessRepositoryImpl implements AccessRepository {
 
     @Override
     public List<UserAccessDto> getUserAccessByLocationId(Long lid) {
-        String sql = "SELECT a.aid, u.firstname, u.lastname FROM access a " +
+        String sql = "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " +
                 "JOIN users u ON a.uid = u.uid " +
                 "WHERE a.lid = ?";
         return jdbcTemplate.query(sql, new Object[]{lid}, userDtoRowMapper);
@@ -56,6 +52,12 @@ public class AccessRepositoryImpl implements AccessRepository {
         return a;
     }
 
+    @Override
+    public Boolean update(Access a) {
+        String sql = "UPDATE access a set a.type=?";
+        int update = jdbcTemplate.update(sql, a.getType());
+        return update!=0;
+    }
 
     private final RowMapper<Access> accessRowMapper = (rs, rowNum) -> {
         Access access = new Access();

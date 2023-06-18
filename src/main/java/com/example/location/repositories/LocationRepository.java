@@ -17,7 +17,6 @@ public interface LocationRepository {
     List<Location> findAllByUid(Long uid);
 
     Optional<Location> findByUidAndLid(Long uid, Long lid);
-    @Query(name = "AllLocations", nativeQuery = true)
     List<SharedLocation> findAllSharedLocation(@Param("uid")Long uid);
     Location save(Location l);
     Optional<Location> findById(Long uid);

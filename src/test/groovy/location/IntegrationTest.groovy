@@ -1,12 +1,12 @@
-package com.example.location
+package location
 
 import com.example.location.entities.Location
 import com.example.location.entities.User
 import com.example.location.repositories.AccessRepository
 import com.example.location.repositories.LocationRepository
 import com.example.location.repositories.UserRepository
-import com.example.location.services.LocationService
-import com.example.location.services.UserService
+import com.example.location.services.LocationServiceImpl
+import com.example.location.services.UserServiceImpl
 import spock.lang.Specification
 
 class IntegrationTest extends Specification {
@@ -15,8 +15,8 @@ class IntegrationTest extends Specification {
     LocationRepository locationRepository = Mock()
     UserRepository userRepository = Mock()
     AccessRepository accessRepository = Mock()
-    def userService = new UserService(userRepository, locationRepository)
-    def locationService = new LocationService(locationRepository, accessRepository, userRepository);
+    def userService = new UserServiceImpl(userRepository, locationRepository)
+    def locationService = new LocationServiceImpl(locationRepository, accessRepository, userRepository);
     def setup() {
 
     }
@@ -35,9 +35,9 @@ class IntegrationTest extends Specification {
         userRepository.findByEmailAndPassword(user.getEmail(), user.password) >> Optional.of(user)
         userRepository.findById(Long.parseLong("1")) >> Optional.of(user)
         when:
-        def user1 = userService.insertUser(user)
-        def authorized = userService.authorize(user1.getEmail(), user1.getPassword())
-        def savedlocation = locationService.saveLocation(user1.getUid().toString(), "home", "kaban 53")
+        def user1 = userService.insertUser(user).join()
+        def authorized = userService.authorize(user1.getEmail(), user1.getPassword()).join()
+        def savedlocation = locationService.saveLocation(user1.getUid().toString(), "home", "kaban 53").join()
         then:
         user1 == user
         authorized == Optional.of(user)

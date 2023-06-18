@@ -1,31 +1,27 @@
-package com.example.location.controllers
+package location
 
+import com.example.location.controllers.MainController
 import com.example.location.entities.Location
 import com.example.location.entities.User
-import com.example.location.services.LocationService
-import com.example.location.services.UserService
-import org.springframework.core.annotation.AnnotationUtils
+import com.example.location.services.LocationServiceImpl
+import com.example.location.services.UserServiceImpl
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.CookieValue
-import org.springframework.web.bind.annotation.RequestParam
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletResponse
+import java.util.concurrent.CompletableFuture
 
 class MainControllerTest extends Specification {
 
+
+
+    UserServiceImpl userService = Stub()
+    LocationServiceImpl locationService = Stub()
+
     @Subject
-    MainController mainController = new MainController()
-
-    UserService userService = Mock(UserService)
-    LocationService locationService = Mock(LocationService)
-
-    def setup() {
-        mainController.userService = userService
-        mainController.locationService = locationService
-    }
+    MainController mainController = new MainController(userService,locationService)
 
     @Unroll
     def "should return the #expectedView view"() {
@@ -34,7 +30,7 @@ class MainControllerTest extends Specification {
         String expectedView = exview
 
         when:
-        String view = mainController."${method}"(model)
+        def view = mainController."${method}"(model)
 
         then:
         view == expectedView
@@ -49,7 +45,7 @@ class MainControllerTest extends Specification {
         given:
         Model model = Mock(Model)
         when:
-        String view = mainController.index("empty", model)
+        String view = mainController.index("empty", model).join()
 
         then:
         view == "indexNotLogged"
@@ -58,9 +54,9 @@ class MainControllerTest extends Specification {
     def "should redirect to /login with error when user is not authorized"() {
         given:
         HttpServletResponse response = Mock(HttpServletResponse)
-        userService.authorize("invalid-email", "invalid-password") >> Optional.empty()
+        userService.authorize("invalid-email", "invalid-password") >> CompletableFuture.completedFuture(Optional.empty())
         when:
-        String view = mainController.loginUser("invalid-email", "invalid-password", response)
+        String view = mainController.loginUser("invalid-email", "invalid-password", response).join()
 
         then:
         view == "redirect:/login?error=true"
@@ -75,8 +71,8 @@ class MainControllerTest extends Specification {
 
 
         when:
-        userService.authorize(email, password) >> Optional.of(user)
-        String view = mainController.loginUser(email, password, response)
+        userService.authorize(email, password) >> CompletableFuture.completedFuture( Optional.of(user))
+        String view = mainController.loginUser(email, password, response).join()
 
         then:
         view == "redirect:/"
@@ -93,7 +89,7 @@ class MainControllerTest extends Specification {
     def "should insert the user and redirect to /login"() {
         given:
         User user = new User(firstName:"John", lastName: "Example", email: "john@example.com", password: "password")
-        userService.insertUser(user) >> new User(uid: 1L)
+        userService.insertUser(user) >> CompletableFuture.completedFuture(new User(uid: 1L))
 
         when:
         String view = mainController.registerUser(user)
@@ -108,10 +104,10 @@ class MainControllerTest extends Specification {
         Model model = Mock(Model)
         List<Location> locations = [new Location(name: "Location 1"), new Location(name: "Location 2")]
 
-        locationService.findUserLocations(uid) >> locations
+        locationService.findUserLocations(uid) >> CompletableFuture.completedFuture(locations)
 
         when:
-        String view = mainController.index(uid, model)
+        String view = mainController.index(uid, model).join()
 
         then:
         view == expectedView

@@ -1,24 +1,12 @@
 package com.example.location.entities;
 
-import com.example.location.dto.UserAccessDto;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.List;
 
 @Data
 @Entity
 @Table(name = "access")
-@NamedNativeQuery(name="getUserAccessByLocationId",query = "SELECT u.firstName AS firstName, u.lastName AS lastName, u.email AS email, a.type AS accessType " +
-        "FROM access a " +
-        "JOIN users u ON u.uid = a.uid " +
-        "WHERE a.lid = :lid", resultSetMapping = "locationMap")
-@SqlResultSetMapping(name="locationMap", classes = @ConstructorResult(targetClass = UserAccessDto.class, columns = {
-        @ColumnResult(name="firstName", type=String.class),
-        @ColumnResult(name="lastName", type=String.class),
-        @ColumnResult(name="email", type=String.class),
-        @ColumnResult(name="accessType", type=String.class)
-}))
 public class Access {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,5 +21,13 @@ public class Access {
     @Column(name = "type", nullable = false)
     private String type;
 
+    public Access(Long uid, Long lid, String shareMode) {
+        this.uid=uid;
+        this.lid=lid;
+        this.type = shareMode;
+    }
+
+    public Access() {
+    }
     // constructors, getters and setters
 }
