@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Repository
 public class UserRepositoryImpl implements UserRepository {
@@ -23,40 +24,48 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByEmailAndPassword(String email, String password) {
-        String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
-        List<User> users = jdbcTemplate.query(sql, new Object[]{email, password}, userRowMapper);
-        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+    public CompletableFuture<Optional<User>> findByEmailAndPassword(String email, String password) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+            List<User> users = jdbcTemplate.query(sql, new Object[]{email, password}, userRowMapper);
+            return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+        });
     }
 
     @Override
-    public Optional<User> findByEmail(String email) {
-        String sql = "SELECT * FROM users WHERE email = ?";
-        List<User> users = jdbcTemplate.query(sql, new Object[]{email}, userRowMapper);
-        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+    public CompletableFuture<Optional<User>> findByEmail(String email) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT * FROM users WHERE email = ?";
+            List<User> users = jdbcTemplate.query(sql, new Object[]{email}, userRowMapper);
+            return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+        });
     }
 
     @Override
-    public Optional<User> findById(Long uid) {
-        String sql = "SELECT * FROM users WHERE uid = ?";
-        List<User> users = jdbcTemplate.query(sql, new Object[]{uid}, userRowMapper);
-        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+    public CompletableFuture<Optional<User>> findById(Long uid) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT * FROM users WHERE uid = ?";
+            List<User> users = jdbcTemplate.query(sql, new Object[]{uid}, userRowMapper);
+            return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+        });
     }
 
     @Override
-    public User save(User user) {
-        String sql = "INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)";
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, user.getFirstName());
-            ps.setString(2, user.getLastName());
-            ps.setString(3, user.getEmail());
-            ps.setString(4, user.getPassword());
-            return ps;
-        }, keyHolder);
-        user.setUid(keyHolder.getKey().longValue());
-        return user;
+    public CompletableFuture<User> save(User user) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)";
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            jdbcTemplate.update(con -> {
+                PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, user.getFirstName());
+                ps.setString(2, user.getLastName());
+                ps.setString(3, user.getEmail());
+                ps.setString(4, user.getPassword());
+                return ps;
+            }, keyHolder);
+            user.setUid(keyHolder.getKey().longValue());
+            return user;
+        });
     }
 
     private final RowMapper<User> userRowMapper = (rs, rowNum) -> {

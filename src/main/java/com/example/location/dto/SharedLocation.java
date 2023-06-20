@@ -1,9 +1,13 @@
 package com.example.location.dto;
 
 import com.example.location.entities.Location;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SharedLocation {
     private Long lid;
 
@@ -14,17 +18,6 @@ public class SharedLocation {
 
     private String address;
     private String accessType;
-
-    public SharedLocation(Long lid, String email, String name, String address, String accessType) {
-        this.lid = lid;
-        this.email = email;
-        this.name = name;
-        this.address = address;
-        this.accessType = accessType;
-    }
-
-    public SharedLocation() {
-    }
 
     public SharedLocation(Location l, String email) {
         this.lid= l.getLid();

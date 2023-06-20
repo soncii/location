@@ -1,5 +1,6 @@
 package com.example.location.services;
 
+import com.example.location.Util;
 import com.example.location.entities.Location;
 import com.example.location.entities.User;
 import com.example.location.repositories.LocationRepository;
@@ -25,44 +26,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public CompletableFuture<Optional<User>> authorize(String email, String password) {
-        return CompletableFuture.supplyAsync(() -> {
-            if (email == null || password == null) {
-                return Optional.empty();
-            }
-            if (!isValidEmail(email)) {
-                return Optional.empty();
-            }
-            return userRepository.findByEmailAndPassword(email, password);
-        });
+        if (email == null || password == null) return CompletableFuture.completedFuture(Optional.empty());
+        if (!isValidEmail(email)) return CompletableFuture.completedFuture(Optional.empty());
+        return userRepository.findByEmailAndPassword(email, password);
     }
 
     @Override
     public CompletableFuture<User> insertUser(User user) {
-        return CompletableFuture.supplyAsync(() -> {
-            if (isEmpty(user)) {
-                return user;
-            }
-            return userRepository.save(user);
-        });
+        if (isEmpty(user)) CompletableFuture.completedFuture(user);
+        return userRepository.save(user);
     }
 
     @Override
     public CompletableFuture<Optional<User>> findUserById(Long uid) {
-        return CompletableFuture.supplyAsync(() -> userRepository.findById(uid));
+        return userRepository.findById(uid);
     }
 
     @Override
     public CompletableFuture<Boolean> authorizeOwner(String uidString, Long lid) {
-        return CompletableFuture.supplyAsync(() -> {
-            Long uid;
-            try {
-                uid = Long.parseLong(uidString);
-            } catch (Exception e) {
-                return false;
-            }
-            Optional<Location> byIdAndLid = locationRepository.findByUidAndLid(uid, lid);
-            return byIdAndLid.isPresent();
-        });
+        Long uid = Util.saveParseLong(uidString);
+        return locationRepository.findByUidAndLid(uid, lid)
+                .thenApply(Optional::isPresent);
     }
 
     private boolean isEmpty(User user) {

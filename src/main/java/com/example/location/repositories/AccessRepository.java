@@ -7,15 +7,16 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public interface AccessRepository {
-    List<Access> findAllByLid(Long lid);
+    CompletableFuture<List<Access>> findAllByLid(Long lid);
     @Query(nativeQuery = true, name = "getUserAccessByLocationId")
-    List<UserAccessDto> getUserAccessByLocationId(@Param("lid")Long lid);
-    Integer deleteByUidAndLid(Long uid, Long lid);
-    Optional<Access> findByUidAndLid(Long uid,Long lid);
+    CompletableFuture<List<UserAccessDto>> getUserAccessByLocationId(@Param("lid")Long lid);
+    CompletableFuture<Integer> deleteByUidAndLid(Long uid, Long lid);
+    CompletableFuture<Optional<Access>> findByUidAndLid(Long uid, Long lid);
 
-    Access save(Access a);
+    CompletableFuture<Access> save(Access a);
 
-    Boolean update(Access a);
+    CompletableFuture<Boolean> update(Access a);
 }

@@ -1,16 +1,14 @@
 package com.example.location.repositories;
 
-import com.example.location.entities.Location;
 import com.example.location.entities.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public interface UserRepository {
-    Optional<User> findByEmailAndPassword(String email, String password);
+    CompletableFuture<Optional<User>> findByEmailAndPassword(String email, String password);
 
-    Optional<User> findByEmail(String email);
-    Optional<User> findById(Long uid);
-    User save(User l);
+    CompletableFuture<Optional<User>> findByEmail(String email);
+    CompletableFuture<Optional<User>> findById(Long uid);
+    CompletableFuture<User> save(User l);
 }

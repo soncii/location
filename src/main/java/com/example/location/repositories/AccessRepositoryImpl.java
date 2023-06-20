@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Repository
 public class AccessRepositoryImpl implements AccessRepository {
@@ -19,44 +20,56 @@ public class AccessRepositoryImpl implements AccessRepository {
     }
 
     @Override
-    public List<Access> findAllByLid(Long lid) {
+    public CompletableFuture<List<Access>> findAllByLid(Long lid) {
+        return CompletableFuture.supplyAsync( () -> {
         String sql = "SELECT * FROM access WHERE lid = ?";
         return jdbcTemplate.query(sql, new Object[]{lid}, accessRowMapper);
+        });
     }
 
     @Override
-    public List<UserAccessDto> getUserAccessByLocationId(Long lid) {
-        String sql = "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " +
-                "JOIN users u ON a.uid = u.uid " +
-                "WHERE a.lid = ?";
-        return jdbcTemplate.query(sql, new Object[]{lid}, userDtoRowMapper);
+    public CompletableFuture<List<UserAccessDto>> getUserAccessByLocationId(Long lid) {
+        return CompletableFuture.supplyAsync( () -> {
+            String sql = "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " +
+                    "JOIN users u ON a.uid = u.uid " +
+                    "WHERE a.lid = ?";
+            return jdbcTemplate.query(sql, new Object[]{lid}, userDtoRowMapper);
+        });
     }
 
     @Override
-    public Integer deleteByUidAndLid(Long uid, Long lid) {
-        String sql = "DELETE FROM access WHERE uid = ? AND lid = ?";
-        return jdbcTemplate.update(sql, uid, lid);
+    public CompletableFuture<Integer> deleteByUidAndLid(Long uid, Long lid) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "DELETE FROM access WHERE uid = ? AND lid = ?";
+            return jdbcTemplate.update(sql, uid, lid);
+        });
     }
 
     @Override
-    public Optional<Access> findByUidAndLid(Long uid, Long lid) {
-        String sql = "SELECT * FROM access WHERE uid = ? AND lid = ?";
-        List<Access> accesses = jdbcTemplate.query(sql, new Object[]{uid, lid}, accessRowMapper);
-        return accesses.isEmpty() ? Optional.empty() : Optional.of(accesses.get(0));
+    public CompletableFuture<Optional<Access>> findByUidAndLid(Long uid, Long lid) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT * FROM access WHERE uid = ? AND lid = ?";
+            List<Access> accesses = jdbcTemplate.query(sql, new Object[]{uid, lid}, accessRowMapper);
+            return accesses.isEmpty() ? Optional.empty() : Optional.of(accesses.get(0));
+        });
     }
 
     @Override
-    public Access save(Access a) {
-        String sql = "INSERT INTO access (uid, lid, type) VALUES (?, ?, ?)";
-        jdbcTemplate.update(sql, a.getUid(), a.getLid(), a.getType());
-        return a;
+    public CompletableFuture<Access> save(Access a) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "INSERT INTO access (uid, lid, type) VALUES (?, ?, ?)";
+            jdbcTemplate.update(sql, a.getUid(), a.getLid(), a.getType());
+            return a;
+        });
     }
 
     @Override
-    public Boolean update(Access a) {
-        String sql = "UPDATE access a set a.type=?";
-        int update = jdbcTemplate.update(sql, a.getType());
-        return update!=0;
+    public CompletableFuture<Boolean> update(Access a) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "UPDATE access a set a.type=?";
+            int update = jdbcTemplate.update(sql, a.getType());
+            return update != 0;
+        });
     }
 
     private final RowMapper<Access> accessRowMapper = (rs, rowNum) -> {

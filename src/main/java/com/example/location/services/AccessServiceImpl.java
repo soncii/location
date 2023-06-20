@@ -24,46 +24,47 @@ public class AccessServiceImpl implements AccessService {
     final String ACCESS_ADMIN = "admin";
     final String ACCESS_READ = "read-only";
 
-    public Optional<Access> saveAccess(String email, String shareMode, Long lid) {
-        Optional<User> user = userRepository.findByEmail(email);
-        if (!user.isPresent()) return Optional.empty();
-        Optional<Access> accessFromRepository = accessRepository.findByUidAndLid(user.get().getUid(), lid);
-        if (accessFromRepository.isPresent()) {
-            Access saving = accessFromRepository.get();
-            if (!saving.getType().equals(shareMode)) saving.setType(shareMode);
-            return Optional.of(accessRepository.save(saving));
-        }
-        Access access = new Access(user.get().getUid(),lid,shareMode);
-        Access save = accessRepository.save(access);
-        if (save.getAid()==null) return Optional.empty();
-        return Optional.of(save);
-
+    public CompletableFuture<Access> saveAccess(String email, String shareMode, Long lid) {
+        Optional<User> user = userRepository.findByEmail(email).join();
+        if (!user.isPresent()) return CompletableFuture.completedFuture(null);
+        return accessRepository.findByUidAndLid(user.get().getUid(), lid)
+                    .thenCompose(access -> {
+                        if (access.isPresent()) {
+                            Access saving = access.get();
+                            if (!saving.getType().equals(shareMode)) saving.setType(shareMode);
+                            return accessRepository.save(saving);
+                        }
+                        return accessRepository.save(new Access());
+                    });
     }
 
 
 
-    public List<UserAccessDto> getUsersOnLocation(Long lid) {
+    public CompletableFuture<List<UserAccessDto>> getUsersOnLocation(Long lid) {
         return accessRepository.getUserAccessByLocationId(lid);
     }
 
     public CompletableFuture<Boolean> delete(Long uid, Long lid, String email) {
         return userRepository.findByEmail(email)
-                .map(user -> CompletableFuture.supplyAsync(() -> accessRepository.deleteByUidAndLid(user.getUid(), lid) != 0))
-                .orElse(CompletableFuture.completedFuture(false));
+                .thenCompose(user -> {
+                    if (!user.isPresent()) return CompletableFuture.completedFuture(0);
+                    return accessRepository.deleteByUidAndLid(user.get().getUid(), lid);
+                })
+                .thenApply(rows -> rows!=0);
     }
 
     public CompletableFuture<Boolean> change(Long lid, String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-        if (!user.isPresent()) return CompletableFuture.completedFuture(false);
-        Long uid = user.get().getUid();
-        return accessRepository.findByUidAndLid(uid, lid)
-                .map(access -> {
-                    Access changedAccess = changeAccess(access);
-                    return CompletableFuture.completedFuture(accessRepository.update(changedAccess) != null);
+        return userRepository.findByEmail(email)
+                .thenCompose(user -> {
+                    if (!user.isPresent()) return CompletableFuture.completedFuture(Optional.empty());
+                    return accessRepository.findByUidAndLid(user.get().getUid(), lid);
                 })
-                .orElseGet(() -> CompletableFuture.completedFuture(false));
+                .thenApply(access -> {
+                    if (!access.isPresent()) return false;
+                    Access changedAccess = changeAccess(access.get());
+                    return accessRepository.update(changedAccess) != null;
+                });
     }
-
 
     private Access changeAccess(Access a) {
         if (a.getType().equals(ACCESS_ADMIN)) {

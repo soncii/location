@@ -1,5 +1,6 @@
 package com.example.location.services;
 
+import com.example.location.Util;
 import com.example.location.dto.LocationDTO;
 import com.example.location.dto.SharedLocation;
 import com.example.location.entities.Location;
@@ -32,67 +33,50 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public CompletableFuture<List<LocationDTO>> findUserLocations(String uidString) {
-        return CompletableFuture.supplyAsync(() -> {
-            Long uid = Long.parseLong(uidString);
-            List<Location> locations = locationRepository.findAllByUid(uid);
-            if (locations == null) {
-                return new ArrayList<>();
-            }
-
-            return locations.stream()
-                    .map(l -> CompletableFuture.supplyAsync(() -> {
-                        LocationDTO dto = new LocationDTO(l);
-                        dto.setPermissions(accessRepository.findAllByLid(l.getLid()));
-                        return dto;
-                    }))
-                    .map(CompletableFuture::join)
-                    .collect(Collectors.toList());
-        });
+        Long uid = Util.saveParseLong(uidString);
+        if (uid == null) return CompletableFuture.completedFuture(null);
+        return locationRepository.findAllByUid(uid)
+                .thenApply(locations -> locations.stream()
+                        .map(l -> accessRepository.findAllByLid(l.getLid())
+                                .thenApply(list -> new LocationDTO(l, list)))
+                        .map(CompletableFuture::join)
+                        .collect(Collectors.toList()));
     }
 
 
 
     @Override
     public CompletableFuture<Location> saveLocation(String uid, String name, String address) {
-        return CompletableFuture.supplyAsync(() -> {
-            long uidL;
-            try {
-                uidL = Long.parseLong(uid);
-            } catch (NumberFormatException e) {
-                return null;
-            }
-            if (!userRepository.findById(uidL).isPresent()) {
-                return null;
-            }
-            Location location = new Location(uidL, name,address);
-            return locationRepository.save(location);
-        });
+        Long uidL = Util.saveParseLong(uid);
+        if (uidL==null) return CompletableFuture.completedFuture(null);
+        return userRepository.findById(uidL)
+                .thenCompose(user -> {
+                    if (!user.isPresent()) return CompletableFuture.completedFuture(null);
+                    return locationRepository.save(new Location(uidL, name,address));
+                });
     }
 
     @Override
     public CompletableFuture<Optional<Location>> findById(Long lid) {
-        return CompletableFuture.supplyAsync(() -> locationRepository.findById(lid));
+        return locationRepository.findById(lid);
     }
 
     @Override
-    public CompletableFuture<List<SharedLocation>> findAllLocations(String uid) {
-        return CompletableFuture.supplyAsync(() -> {
-            if (uid.equals("empty")) {
-                return null;
-            }
+    public CompletableFuture<List<SharedLocation>> findAllLocations(String uidStr) {
+        Long uid = Util.saveParseLong(uidStr);
+        if (uid==null) return CompletableFuture.completedFuture(null);
+        Optional<User> user = userRepository.findById(uid).join();
+        if (!user.isPresent()) return CompletableFuture.completedFuture(null);
 
-            User user = userRepository.findById(Long.parseLong(uid)).orElse(null);
-
-            List<SharedLocation> allSharedLocation = locationRepository.findAllSharedLocation(Long.parseLong(uid));
-            List<Location> ownerLocations = locationRepository.findAllByUid(Long.parseLong(uid));
-
-            return ownerLocations.stream()
-                    .map(location -> CompletableFuture.supplyAsync(() -> {
-                        String userEmail = (user != null) ? user.getEmail() : null;
-                        return new SharedLocation(location, userEmail);
-                    }))
+        CompletableFuture<List<SharedLocation>> allSharedLocations = locationRepository.findAllSharedLocation(uid);
+        CompletableFuture<List<Location>> ownerLocations = locationRepository.findAllByUid(uid);
+        return allSharedLocations.thenCombine(ownerLocations, (shared,owner) -> {
+            List<SharedLocation> modified = owner.stream()
+                    .map(location -> CompletableFuture.supplyAsync(() -> new SharedLocation(location, user.get().getEmail())))
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
+            shared.addAll(modified);
+            return shared;
         });
     }
 
