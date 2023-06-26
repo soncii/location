@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS main;
+use main;
+
 -- Create the users table
 CREATE TABLE IF NOT EXISTS users (
                                      uid BIGINT AUTO_INCREMENT PRIMARY KEY,

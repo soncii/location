@@ -1,34 +1,26 @@
 package com.example.location.entities;
 
-
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
 @Data
-@Entity
-@Table(name = "location")
+@NoArgsConstructor
 public class Location {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private Long lid;
 
-    @Column(name = "uid", nullable = false)
     private Long uid;
 
-    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "address", nullable = false)
     private String address;
 
     public Location(long uidL, String name, String address) {
-        this.uid=uidL;
-        this.name=name;
-        this.address=address;
-    }
 
-    public Location() {
+        this.uid = uidL;
+        this.name = name;
+        this.address = address;
     }
-    // constructors, getters and setters
 }

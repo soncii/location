@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public interface LocationService {
+
     CompletableFuture<List<LocationDTO>> findUserLocations(String uidString);
 
     CompletableFuture<Location> saveLocation(String uid, String name, String address);

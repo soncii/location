@@ -5,13 +5,9 @@ import com.example.location.entities.User
 import com.example.location.repositories.LocationRepository
 import com.example.location.repositories.UserRepository
 import com.example.location.services.UserServiceImpl
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 import spock.lang.Specification
-import spock.util.concurrent.BlockingVariable
-import spock.util.concurrent.PollingConditions
 
-import java.util.Optional
+
 import java.util.concurrent.CompletableFuture
 
 class UserServiceImplTest extends Specification {
@@ -23,139 +19,131 @@ class UserServiceImplTest extends Specification {
     UserServiceImpl userService = new UserServiceImpl(userRepository, locationRepository)
 
     def "authorize should return user when email and password are valid"() {
+
         given:
-        def email = "test@example.com"
-        def password = "password"
-        def expectedUser = new User(email: email, password: password)
-        userRepository.findByEmailAndPassword(email, password) >> Optional.of(expectedUser)
+            def email = "test@example.com"
+            def password = "password"
+            def expectedUser = new User(email: email, password: password)
+            userRepository.findByEmailAndPassword(email, password) >> CompletableFuture.completedFuture(Optional.of(expectedUser))
 
         when:
-        def result = userService.authorize(email, password).join()
+            def result = userService.authorize(email, password).join()
 
         then:
-        result.isPresent()
-        result.get() == expectedUser
+            result.isPresent()
+            result.get() == expectedUser
     }
 
     def "authorize should return empty optional when email is null"() {
+
         when:
-        def result = userService.authorize(null, "password").join()
+            def result = userService.authorize(null, "password").join()
 
         then:
-        !result.isPresent()
+            !result.isPresent()
     }
 
     def "authorize should return empty optional when password is null"() {
+
         when:
-        def result = userService.authorize("test@example.com", null).join()
+            def result = userService.authorize("test@example.com", null).join()
 
         then:
-        !result.isPresent()
+            !result.isPresent()
     }
 
     def "insertUser should save the user when it is not empty"() {
+
         given:
-        def user = new User(firstName: "John", lastName: "Doe", email: "test@example.com", password: "password")
-        userRepository.save(user) >> user
+            def user = new User(firstName: "John", lastName: "Doe", email: "test@example.com", password: "password")
+            userRepository.save(user) >> CompletableFuture.completedFuture(user)
 
         when:
-        def result = userService.insertUser(user).join()
+            def result = userService.insertUser(user).join()
 
         then:
-        result == user
-    }
-
-    def "insertUser should return the user without saving when it is empty"() {
-        given:
-        def user = new User()
-
-        when:
-        def result = userService.insertUser(user).join()
-
-        then:
-        result == user
-        0 * userRepository.save(_)
+            result == user
     }
 
     def "findUserById should return user optional when the user exists"() {
+
         given:
-        def uid = 1L
-        def expectedUser = new User(uid: uid)
-        userRepository.findById(uid) >> Optional.of(expectedUser)
+            def uid = 1L
+            def expectedUser = new User(uid: uid)
+            userRepository.findById(uid) >> CompletableFuture.completedFuture(Optional.of(expectedUser))
 
         when:
-        def result = userService.findUserById(uid).join()
+            def result = userService.findUserById(uid).join()
 
         then:
-        result.isPresent()
-        result.get() == expectedUser
+            result.isPresent()
+            result.get() == expectedUser
     }
-
-
 
     def "findUserById should return empty optional when the user does not exist"() {
-        given:
-        def uid = 1L
-        userRepository.findById(uid) >> Optional.empty()
 
-        def result = new BlockingVariable<Optional<User>>()
+        given:
+            def uid = 1L
+            userRepository.findById(uid) >> CompletableFuture.completedFuture(Optional.empty())
 
         when:
-        userService.findUserById(uid).thenAccept({ x -> result.set(x) })
+            def result = userService.findUserById(uid).join()
 
         then:
-        result.get() == Optional.empty()
-
+            result == Optional.empty()
     }
 
-
-
     def "authorizeOwner should return true when uidString is a valid Long and Location exists"() {
+
         given:
-        def uidString = "1"
-        def lid = 1L
-        locationRepository.findByUidAndLid(_, _) >> Optional.of(new Location())
+            def uidString = "1"
+            def lid = 1L
+            locationRepository.findByUidAndLid(_, _) >> CompletableFuture.completedFuture(Optional.of(new Location()))
 
         when:
-        def result = userService.authorizeOwner(uidString, lid).join()
+            def result = userService.authorizeOwner(uidString, lid).join()
 
         then:
-        result
+            result
     }
 
     def "authorizeOwner should return false when uidString is not a valid Long"() {
+
         when:
-        def result = userService.authorizeOwner("invalid", 1L).join()
+            def result = userService.authorizeOwner("invalid", 1L).join()
 
         then:
-        !result
+            !result
     }
 
     def "authorizeOwner should return false when Location does not exist"() {
+
         given:
-        def uidString = "1"
-        def lid = 1L
-        locationRepository.findByUidAndLid(_, _) >> Optional.empty()
+            def uidString = "1"
+            def lid = 1L
+            locationRepository.findByUidAndLid(_, _) >> CompletableFuture.completedFuture(Optional.empty())
 
         when:
-        def result = userService.authorizeOwner(uidString, lid).join()
+            def result = userService.authorizeOwner(uidString, lid).join()
 
         then:
-        !result
+            !result
     }
 
     def "isValidEmail should return true for valid email addresses"() {
+
         expect:
-        userService.isValidEmail("test@example.com")
-        userService.isValidEmail("john.doe@example.co.uk")
-        userService.isValidEmail("info+test@example.com")
+            userService.isValidEmail("test@example.com")
+            userService.isValidEmail("john.doe@example.co.uk")
+            userService.isValidEmail("info+test@example.com")
     }
 
     def "isValidEmail should return false for invalid email addresses"() {
+
         expect:
-        !userService.isValidEmail("test@example")
-        !userService.isValidEmail("john.doe@example..co.uk")
-        !userService.isValidEmail("test@")
-        !userService.isValidEmail("@example.com")
+            !userService.isValidEmail("test@example")
+            !userService.isValidEmail("john.doe@example..co.uk")
+            !userService.isValidEmail("test@")
+            !userService.isValidEmail("@example.com")
     }
 }

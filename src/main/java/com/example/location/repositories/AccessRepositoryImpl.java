@@ -4,8 +4,12 @@ import com.example.location.dto.UserAccessDto;
 import com.example.location.entities.Access;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -16,29 +20,33 @@ public class AccessRepositoryImpl implements AccessRepository {
     private final JdbcTemplate jdbcTemplate;
 
     public AccessRepositoryImpl(JdbcTemplate jdbcTemplate) {
+
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public CompletableFuture<List<Access>> findAllByLid(Long lid) {
-        return CompletableFuture.supplyAsync( () -> {
-        String sql = "SELECT * FROM access WHERE lid = ?";
-        return jdbcTemplate.query(sql, new Object[]{lid}, accessRowMapper);
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT * FROM access WHERE lid = ?";
+            return jdbcTemplate.query(sql, new Object[]{lid}, accessRowMapper);
         });
     }
 
     @Override
     public CompletableFuture<List<UserAccessDto>> getUserAccessByLocationId(Long lid) {
-        return CompletableFuture.supplyAsync( () -> {
+
+        return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " +
-                    "JOIN users u ON a.uid = u.uid " +
-                    "WHERE a.lid = ?";
+                "JOIN users u ON a.uid = u.uid " +
+                "WHERE a.lid = ?";
             return jdbcTemplate.query(sql, new Object[]{lid}, userDtoRowMapper);
         });
     }
 
     @Override
     public CompletableFuture<Integer> deleteByUidAndLid(Long uid, Long lid) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "DELETE FROM access WHERE uid = ? AND lid = ?";
             return jdbcTemplate.update(sql, uid, lid);
@@ -47,6 +55,7 @@ public class AccessRepositoryImpl implements AccessRepository {
 
     @Override
     public CompletableFuture<Optional<Access>> findByUidAndLid(Long uid, Long lid) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM access WHERE uid = ? AND lid = ?";
             List<Access> accesses = jdbcTemplate.query(sql, new Object[]{uid, lid}, accessRowMapper);
@@ -58,13 +67,28 @@ public class AccessRepositoryImpl implements AccessRepository {
     public CompletableFuture<Access> save(Access a) {
         return CompletableFuture.supplyAsync(() -> {
             String sql = "INSERT INTO access (uid, lid, type) VALUES (?, ?, ?)";
-            jdbcTemplate.update(sql, a.getUid(), a.getLid(), a.getType());
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                ps.setLong(1, a.getUid());
+                ps.setLong(2, a.getLid());
+                ps.setString(3, a.getType());
+                return ps;
+            }, keyHolder);
+
+            if (keyHolder.getKey() != null) {
+                long generatedKey = keyHolder.getKey().longValue();
+                a.setAid(generatedKey);
+            }
+
             return a;
         });
     }
 
+
     @Override
     public CompletableFuture<Boolean> update(Access a) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "UPDATE access a set a.type=?";
             int update = jdbcTemplate.update(sql, a.getType());
@@ -81,7 +105,6 @@ public class AccessRepositoryImpl implements AccessRepository {
         return access;
     };
 
-
     private final RowMapper<UserAccessDto> userDtoRowMapper = (rs, rowNum) -> {
         UserAccessDto dto = new UserAccessDto();
         dto.setAccessType(rs.getString("type"));
@@ -90,5 +113,4 @@ public class AccessRepositoryImpl implements AccessRepository {
         dto.setLastName(rs.getString("lastname"));
         return dto;
     };
-
 }

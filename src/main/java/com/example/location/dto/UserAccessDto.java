@@ -6,12 +6,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class UserAccessDto {
-    private String firstName;
 
+    private String firstName;
 
     private String lastName;
 
-
     private String email;
+
     private String accessType;
 }

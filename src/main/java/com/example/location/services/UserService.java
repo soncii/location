@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public interface UserService {
+
     CompletableFuture<Optional<User>> authorize(String email, String password);
 
     CompletableFuture<User> insertUser(User user);

@@ -17,18 +17,19 @@ class AccessServiceImplTest extends Specification {
 
     AccessServiceImpl accessService = new AccessServiceImpl(accessRepository, userRepository)
 
-    def "saveAccess returns optional with aid #aid"() {
+    def "saveAccess returns optional with aid 1"() {
         def shareMode="admin"
-        Long lid = 1L, aid=1L
-        Access access = new Access(aid: lid, uid: 1L, lid: aid, type: "admin")
+        def email = "test@example.com"
+        User user = new User(uid:1L, email: email)
+        def lid = 1L, aid=1L
+        Access access = new Access(aid: aid, uid: user.uid, lid: lid, type: shareMode)
 
-        String email = "test@example.com"
-        User user = new User(uid:1L)
         given:
-        accessRepository.save(_ as Access) >> access
-        userRepository.findByEmail(email) >> Optional.of(user)
+        accessRepository.save(_ as Access) >> CompletableFuture.completedFuture( access)
+        userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.of(user))
+        accessRepository.findByUidAndLid(user.uid, lid) >> CompletableFuture.completedFuture(Optional.empty())
         expect:
-        accessService.saveAccess(email, shareMode, lid)==(Optional.of(new Access(aid: aid, uid: user.uid, lid: lid, type: shareMode)))
+        accessService.saveAccess(email, shareMode, lid).join()==access
 
     }
 
@@ -40,10 +41,10 @@ class AccessServiceImplTest extends Specification {
                 new UserAccessDto(email: "user2@example.com", accessType: "read-only")
         ]
 
-        accessRepository.getUserAccessByLocationId(lid) >> userAccessList
+        accessRepository.getUserAccessByLocationId(lid) >> CompletableFuture.completedFuture(userAccessList)
 
         when:
-        List<UserAccessDto> result = accessService.getUsersOnLocation(lid)
+        List<UserAccessDto> result = accessService.getUsersOnLocation(lid).join()
 
         then:
         result == userAccessList
@@ -55,11 +56,11 @@ class AccessServiceImplTest extends Specification {
         Long lid = 1L
         String email = "test@example.com"
 
-        userRepository.findByEmail(email) >> Optional.of(new User(uid: uid))
-        accessRepository.deleteByUidAndLid(uid, lid) >> 1
+        userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.of(new User(uid: uid)))
+        accessRepository.deleteByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(1)
 
         when:
-        def result = accessService.delete(uid, lid, email).join()
+        def result = accessService.delete( lid, email).join()
 
         then:
         result == true
@@ -71,10 +72,10 @@ class AccessServiceImplTest extends Specification {
         Long lid = 1L
         String email = "test@example.com"
 
-        userRepository.findByEmail(email) >> Optional.empty()
+        userRepository.findByEmail(email) >>CompletableFuture.completedFuture(Optional.empty())
 
         when:
-        def result = accessService.delete(uid, lid, email)
+        def result = accessService.delete(lid, email)
 
         then:
         result.get() == false
@@ -87,9 +88,9 @@ class AccessServiceImplTest extends Specification {
         Access existingAccess = new Access(uid: 1L, lid: lid, type: "admin")
         Access changedAccess = new Access(uid: 1L, lid: lid, type: "read-only")
 
-        userRepository.findByEmail(email) >> Optional.of(new User(uid: 1L))
-        accessRepository.findByUidAndLid(1L, lid) >> Optional.of(existingAccess)
-        accessRepository.update(changedAccess) >> true
+        userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.of(new User(uid: 1L)))
+        accessRepository.findByUidAndLid(1L, lid) >> CompletableFuture.completedFuture(Optional.of(existingAccess))
+        accessRepository.update(changedAccess) >> CompletableFuture.completedFuture(true)
 
         when:
         def result = accessService.change(lid, email)
@@ -103,7 +104,7 @@ class AccessServiceImplTest extends Specification {
         Long lid = 1L
         String email = "test@example.com"
 
-        userRepository.findByEmail(email) >> Optional.empty()
+        userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.empty())
 
         when:
         def result = accessService.change(lid, email)

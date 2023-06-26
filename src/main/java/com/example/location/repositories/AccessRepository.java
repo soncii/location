@@ -10,10 +10,13 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public interface AccessRepository {
+
     CompletableFuture<List<Access>> findAllByLid(Long lid);
-    @Query(nativeQuery = true, name = "getUserAccessByLocationId")
-    CompletableFuture<List<UserAccessDto>> getUserAccessByLocationId(@Param("lid")Long lid);
+
+    CompletableFuture<List<UserAccessDto>> getUserAccessByLocationId(Long lid);
+
     CompletableFuture<Integer> deleteByUidAndLid(Long uid, Long lid);
+
     CompletableFuture<Optional<Access>> findByUidAndLid(Long uid, Long lid);
 
     CompletableFuture<Access> save(Access a);

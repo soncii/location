@@ -13,7 +13,10 @@ public interface LocationRepository {
     CompletableFuture<List<Location>> findAllByUid(Long uid);
 
     CompletableFuture<Optional<Location>> findByUidAndLid(Long uid, Long lid);
-    CompletableFuture<List<SharedLocation>> findAllSharedLocation(@Param("uid")Long uid);
+
+    CompletableFuture<List<SharedLocation>> findAllSharedLocation(@Param("uid") Long uid);
+
     CompletableFuture<Location> save(Location l);
+
     CompletableFuture<Optional<Location>> findById(Long uid);
 }

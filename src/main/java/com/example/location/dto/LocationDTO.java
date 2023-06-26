@@ -11,8 +11,8 @@ import java.util.List;
 
 @Data
 public class LocationDTO {
-    private Long id;
 
+    private Long id;
 
     private Long uid;
 
@@ -20,19 +20,14 @@ public class LocationDTO {
 
     private String address;
     private List<Access> permissions;
-    public LocationDTO(Location l) {
-        this.id=l.getLid();
-        this.uid=l.getUid();
-        this.name=l.getName();
-        this.address=l.getAddress();
-        this.permissions = new ArrayList<>();
-    }
+
 
     public LocationDTO(Location l, List<Access> arrayList) {
-        this.id=l.getLid();
-        this.uid=l.getUid();
-        this.name=l.getName();
-        this.address=l.getAddress();
-        this.permissions=arrayList;
+
+        this.id = l.getLid();
+        this.uid = l.getUid();
+        this.name = l.getName();
+        this.address = l.getAddress();
+        this.permissions = arrayList;
     }
 }

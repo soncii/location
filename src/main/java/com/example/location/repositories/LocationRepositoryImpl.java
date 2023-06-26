@@ -22,11 +22,13 @@ public class LocationRepositoryImpl implements LocationRepository {
     private final JdbcTemplate jdbcTemplate;
 
     public LocationRepositoryImpl(JdbcTemplate jdbcTemplate) {
+
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public CompletableFuture<List<Location>> findAllByUid(Long uid) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM location WHERE uid = ?";
             return jdbcTemplate.query(sql, new Object[]{uid}, new LocationRowMapper());
@@ -35,6 +37,7 @@ public class LocationRepositoryImpl implements LocationRepository {
 
     @Override
     public CompletableFuture<Optional<Location>> findByUidAndLid(Long uid, Long lid) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM location WHERE uid = ? AND lid = ?";
             List<Location> locations = jdbcTemplate.query(sql, new Object[]{uid, lid}, new LocationRowMapper());
@@ -44,18 +47,20 @@ public class LocationRepositoryImpl implements LocationRepository {
 
     @Override
     public CompletableFuture<List<SharedLocation>> findAllSharedLocation(Long uid) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT l.lid, u.email, l.name, l.address, a.type AS accessType " +
-                    "FROM location l " +
-                    "JOIN access a ON l.lid = a.lid " +
-                    "JOIN users u ON u.uid = l.uid " +
-                    "WHERE a.uid = ?";
+                "FROM location l " +
+                "JOIN access a ON l.lid = a.lid " +
+                "JOIN users u ON u.uid = l.uid " +
+                "WHERE a.uid = ?";
             return jdbcTemplate.query(sql, new Object[]{uid}, new SharedLocationRowMapper());
         });
     }
 
     @Override
     public CompletableFuture<Location> save(Location l) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "INSERT INTO location (uid, name, address) VALUES (?, ?, ?)";
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -74,9 +79,9 @@ public class LocationRepositoryImpl implements LocationRepository {
         });
     }
 
-
     @Override
     public CompletableFuture<Optional<Location>> findById(Long uid) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM location WHERE lid = ?";
             List<Location> locations = jdbcTemplate.query(sql, new Object[]{uid}, new LocationRowMapper());
@@ -85,8 +90,10 @@ public class LocationRepositoryImpl implements LocationRepository {
     }
 
     private static class LocationRowMapper implements RowMapper<Location> {
+
         @Override
         public Location mapRow(ResultSet rs, int rowNum) throws SQLException {
+
             Location location = new Location();
             location.setLid(rs.getLong("lid"));
             location.setUid(rs.getLong("uid"));
@@ -97,8 +104,10 @@ public class LocationRepositoryImpl implements LocationRepository {
     }
 
     private static class SharedLocationRowMapper implements RowMapper<SharedLocation> {
+
         @Override
         public SharedLocation mapRow(ResultSet rs, int rowNum) throws SQLException {
+
             SharedLocation sharedLocation = new SharedLocation();
             sharedLocation.setLid(rs.getLong("lid"));
             sharedLocation.setEmail(rs.getString("email"));

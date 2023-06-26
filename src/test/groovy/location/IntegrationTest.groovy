@@ -9,6 +9,8 @@ import com.example.location.services.LocationServiceImpl
 import com.example.location.services.UserServiceImpl
 import spock.lang.Specification
 
+import java.util.concurrent.CompletableFuture
+
 class IntegrationTest extends Specification {
 
 
@@ -28,12 +30,12 @@ class IntegrationTest extends Specification {
         def lastname = "User"
         def password = "password"
         def user = new User(uid: 1, email: email, firstName: name, lastName: lastname, password: password)
-        userRepository.save(user) >> user
+        userRepository.save(user) >> CompletableFuture.completedFuture(user)
 
         def location = new Location(name: "home", address: "kaban 53", uid: 1)
-        locationRepository.save(_ as Location) >> location
-        userRepository.findByEmailAndPassword(user.getEmail(), user.password) >> Optional.of(user)
-        userRepository.findById(Long.parseLong("1")) >> Optional.of(user)
+        locationRepository.save(_ as Location) >> CompletableFuture.completedFuture(location)
+        userRepository.findByEmailAndPassword(user.getEmail(), user.password) >> CompletableFuture.completedFuture(Optional.of(user))
+        userRepository.findById(Long.parseLong("1")) >> CompletableFuture.completedFuture(Optional.of(user))
         when:
         def user1 = userService.insertUser(user).join()
         def authorized = userService.authorize(user1.getEmail(), user1.getPassword()).join()

@@ -1,10 +1,11 @@
 package com.example.location.services;
 
-import com.example.location.Util;
-import com.example.location.entities.Location;
+import com.example.location.util.Util;
 import com.example.location.entities.User;
 import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,9 @@ import java.util.regex.Pattern;
 
 @Service
 public class UserServiceImpl implements UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
 
@@ -26,39 +30,58 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public CompletableFuture<Optional<User>> authorize(String email, String password) {
-        if (email == null || password == null) return CompletableFuture.completedFuture(Optional.empty());
-        if (!isValidEmail(email)) return CompletableFuture.completedFuture(Optional.empty());
+
+        if (email == null || password == null) {
+            logger.warn("Invalid email or password");
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
+
+        if (!isValidEmail(email)) {
+            logger.warn("Invalid email format: {}", email);
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
+
         return userRepository.findByEmailAndPassword(email, password);
     }
 
     @Override
     public CompletableFuture<User> insertUser(User user) {
-        if (isEmpty(user)) CompletableFuture.completedFuture(user);
+
+        if (isEmpty(user)) {
+            logger.warn("User is empty");
+            CompletableFuture.completedFuture(user);
+        }
+
         return userRepository.save(user);
     }
 
     @Override
     public CompletableFuture<Optional<User>> findUserById(Long uid) {
+
         return userRepository.findById(uid);
     }
 
     @Override
     public CompletableFuture<Boolean> authorizeOwner(String uidString, Long lid) {
+
         Long uid = Util.saveParseLong(uidString);
+        if (uid==null) return CompletableFuture.completedFuture(false);
         return locationRepository.findByUidAndLid(uid, lid)
-                .thenApply(Optional::isPresent);
+            .thenApply(Optional::isPresent);
     }
 
     private boolean isEmpty(User user) {
+
         return (user.getFirstName() == null || user.getLastName() == null
-                || user.getPassword() == null || user.getEmail() == null);
+            || user.getPassword() == null || user.getEmail() == null);
     }
 
     private boolean isValidEmail(String email) {
+
         String regex = "^[a-zA-Z0-9_+&*-]+(?:\\." +
-                "[a-zA-Z0-9_+&*-]+)*@" +
-                "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
-                "A-Z]{2,7}$";
+            "[a-zA-Z0-9_+&*-]+)*@" +
+            "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
+            "A-Z]{2,7}$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();

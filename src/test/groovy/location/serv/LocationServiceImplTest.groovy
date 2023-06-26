@@ -35,18 +35,18 @@ class LocationServiceImplTest extends Specification {
         def location1 = new Location(uid: uid, name: "Location 1", address: "Address 1")
         def location2 = new Location(uid: uid, name: "Location 2", address: "Address 2")
         def locations = [location1, location2]
-        locationRepository.findAllByUid(uid) >> locations
-        accessRepository.findAllByLid(location1.lid) >> []
-        accessRepository.findAllByLid(location2.lid) >> []
+        locationRepository.findAllByUid(uid) >> CompletableFuture.completedFuture(locations)
+        accessRepository.findAllByLid(location1.lid) >> CompletableFuture.completedFuture([])
+        accessRepository.findAllByLid(location2.lid) >> CompletableFuture.completedFuture([])
 
         when:
         def result = locationService.findUserLocations(uidString)
 
         then:
-        result.get().equals([
-                new LocationDTO(location1, []),
-                new LocationDTO(location2, [])
-        ])
+        result.get() == [
+            new LocationDTO(location1, []),
+            new LocationDTO(location2, [])
+        ]
 
     }
 
@@ -54,7 +54,7 @@ class LocationServiceImplTest extends Specification {
         given:
         def uidString = "1"
         def uid = 1L
-        locationRepository.findAllByUid(uid) >> null
+        locationRepository.findAllByUid(uid) >> CompletableFuture.completedFuture(new ArrayList<LocationDTO>())
 
         when:
         def result = locationService.findUserLocations(uidString)
@@ -71,8 +71,8 @@ class LocationServiceImplTest extends Specification {
         def name = "Location 1"
         def address = "Address 1"
         def user = new User(uid: 1L)
-        userRepository.findById(1L) >> Optional.of(user)
-        locationRepository.save(_ as Location) >> { Location location -> location }
+        userRepository.findById(1L) >> CompletableFuture.completedFuture(Optional.of(user))
+        locationRepository.save(_ as Location) >> { Location location -> CompletableFuture.completedFuture(location) }
 
         when:
         def result = locationService.saveLocation(uid, name, address).join()
@@ -103,7 +103,7 @@ class LocationServiceImplTest extends Specification {
         def uid = "1"
         def name = "Location 1"
         def address = "Address 1"
-        userRepository.findById(uid as Long) >> Optional.empty()
+        userRepository.findById(1L) >>CompletableFuture.completedFuture(Optional.empty())
 
         when:
         def result = locationService.saveLocation(uid, name, address)
@@ -118,7 +118,7 @@ class LocationServiceImplTest extends Specification {
         given:
         def lid = 1L
         def location = new Location(lid: lid, name: "Location 1", address: "Address 1")
-        locationRepository.findById(lid) >> Optional.of(location)
+        locationRepository.findById(lid) >> CompletableFuture.completedFuture(Optional.of(location))
 
         when:
         def result = locationService.findById(lid)
@@ -140,9 +140,9 @@ class LocationServiceImplTest extends Specification {
                 new SharedLocation(location1, user.email),
                 new SharedLocation(location2, user.email)
         ]
-        userRepository.findById(uidL) >> Optional.of(user)
-        locationRepository.findAllSharedLocation(uidL as Long) >> allSharedLocations
-        locationRepository.findAllByUid(uidL as Long) >> [location1, location2]
+        userRepository.findById(uidL) >> CompletableFuture.completedFuture(Optional.of(user))
+        locationRepository.findAllSharedLocation(uidL as Long) >> CompletableFuture.completedFuture(allSharedLocations)
+        locationRepository.findAllByUid(uidL as Long) >>CompletableFuture.completedFuture( [location1, location2])
 
         when:
         def result = locationService.findAllLocations(uid).join()

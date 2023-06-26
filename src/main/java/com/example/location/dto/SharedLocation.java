@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SharedLocation {
-    private Long lid;
 
+    private Long lid;
 
     private String email;
 
@@ -20,10 +20,11 @@ public class SharedLocation {
     private String accessType;
 
     public SharedLocation(Location l, String email) {
-        this.lid= l.getLid();
-        this.email=email;
-        this.name=l.getName();
-        this.address=l.getAddress();
-        this.accessType="owner";
+
+        this.lid = l.getLid();
+        this.email = email;
+        this.name = l.getName();
+        this.address = l.getAddress();
+        this.accessType = "owner";
     }
 }

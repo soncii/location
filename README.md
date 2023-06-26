@@ -1,3 +1,6 @@
+To create db in command line `mysql -u root -p -e "CREATE DATABASE location_damir;"`
+To create schema `mysql -u root -p -D location_damir < resources/schema.sql`
+
 # Internship Test Task - Location System
 This project is an implementation of a location system web server that allows users to create locations, share locations with other users, manage access to shared locations, and get all locations available for the user.
 

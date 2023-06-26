@@ -15,16 +15,17 @@ import java.util.concurrent.CompletableFuture;
 
 @Repository
 public class UserRepositoryImpl implements UserRepository {
+
     private final JdbcTemplate jdbcTemplate;
 
-
     public UserRepositoryImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
 
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public CompletableFuture<Optional<User>> findByEmailAndPassword(String email, String password) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
             List<User> users = jdbcTemplate.query(sql, new Object[]{email, password}, userRowMapper);
@@ -34,6 +35,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public CompletableFuture<Optional<User>> findByEmail(String email) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM users WHERE email = ?";
             List<User> users = jdbcTemplate.query(sql, new Object[]{email}, userRowMapper);
@@ -43,6 +45,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public CompletableFuture<Optional<User>> findById(Long uid) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM users WHERE uid = ?";
             List<User> users = jdbcTemplate.query(sql, new Object[]{uid}, userRowMapper);
@@ -52,6 +55,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public CompletableFuture<User> save(User user) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)";
             KeyHolder keyHolder = new GeneratedKeyHolder();
