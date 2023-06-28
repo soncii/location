@@ -1,6 +1,7 @@
 package com.example.location.controllers;
 
 import com.example.location.dto.LocationDTO;
+import com.example.location.dto.LoginDTO;
 import com.example.location.entities.User;
 import com.example.location.services.LocationService;
 import com.example.location.services.UserService;
@@ -32,60 +33,61 @@ public class MainController {
     private final UserService userService;
     private final LocationService locationService;
     private static final String COOKIE_NEEDED = "cookie value is needed";
-    @Autowired
+
     public MainController(UserService userService, LocationService locationService) {
+
         this.userService = userService;
         this.locationService = locationService;
     }
 
     @GetMapping("/user/locations")
     public CompletableFuture<ResponseEntity<List<LocationDTO>>> index(
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "empty") String uid) throws BadRequestException {
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "empty") String uid
+    ) throws BadRequestException {
+
         if (uid.equals("empty")) {
             logger.warn("Invalid or empty UID cookie received");
             throw new BadRequestException(COOKIE_NEEDED);
         }
 
         logger.info("Retrieving locations for UID: {}", uid);
-        return locationService.findUserLocations(uid)
-            .thenApply(locations -> {
-                logger.info("Retrieved locations successfully");
-                return ResponseEntity.ok(locations);
-            });
+        return locationService.findUserLocations(uid).thenApply(locations -> {
+            logger.info("Retrieved locations successfully");
+            return ResponseEntity.ok(locations);
+        });
     }
 
     @PostMapping("/login")
     public CompletableFuture<ResponseEntity<Void>> loginUser(
-        @RequestParam("email") String email, @RequestParam("password") String password,
-        HttpServletResponse response) throws ForbidException {
+        LoginDTO login, HttpServletResponse response
+    ) throws ForbidException {
 
-        logger.info("Logging in user with email: {}", email);
-        return userService.authorize(email, password)
-            .thenCompose(user -> {
-                if (!user.isPresent()) {
-                    logger.warn("Invalid email or password");
-                    throw new UnauthorizedException("email or password is incorrect");
-                }
+        logger.info("Logging in user with email: {}", login.getEmail());
+        return userService.authorize(login.getEmail(), login.getPassword()).thenCompose(user -> {
+            if (!user.isPresent()) {
+                logger.warn("Invalid email or password");
+                throw new UnauthorizedException("email or password is incorrect");
+            }
 
-                logger.info("User logged in successfully");
-                response.addHeader(HttpHeaders.AUTHORIZATION, user.get().getUid().toString());
-                return CompletableFuture.completedFuture(new ResponseEntity<>(HttpStatus.OK));
-            });
+            logger.info("User logged in successfully");
+            response.addHeader(HttpHeaders.AUTHORIZATION, user.get().getUid().toString());
+            return CompletableFuture.completedFuture(new ResponseEntity<>(HttpStatus.OK));
+        });
     }
 
-    @PostMapping(value = "/register", consumes = APPLICATION_JSON_VALUE)
-    public CompletableFuture<ResponseEntity<User>> registerUser(@RequestBody User user) {
+    @PostMapping(value = "/register")
+    public CompletableFuture<ResponseEntity<User>> registerUser(User user) {
+
         logger.info("Registering user with email: {}", user.getEmail());
 
-        return userService.insertUser(user)
-            .thenApply(saved -> {
-                if (saved.getUid() == null) {
-                    logger.error("Failed to insert user to database");
-                    throw new DbSaveException("couldn't insert user to db");
-                }
+        return userService.insertUser(user).thenApply(saved -> {
+            if (saved.getUid() == null) {
+                logger.error("Failed to insert user to database");
+                throw new DbSaveException("couldn't insert user to db");
+            }
 
-                logger.info("User registered successfully");
-                return ResponseEntity.ok(saved);
-            });
+            logger.info("User registered successfully");
+            return ResponseEntity.ok(saved);
+        });
     }
 }

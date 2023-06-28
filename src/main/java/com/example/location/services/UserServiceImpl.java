@@ -22,7 +22,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
 
-    @Autowired
     public UserServiceImpl(UserRepository userRepository, LocationRepository locationRepository) {
         this.userRepository = userRepository;
         this.locationRepository = locationRepository;

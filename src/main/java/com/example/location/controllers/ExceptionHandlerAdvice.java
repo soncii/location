@@ -1,16 +1,12 @@
 package com.example.location.controllers;
 
 import com.example.location.util.BadRequestException;
-import com.example.location.util.DbSaveException;
 import com.example.location.util.ForbidException;
 import com.example.location.util.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.concurrent.CompletableFuture;
 
 @RestControllerAdvice
 public class ExceptionHandlerAdvice {
@@ -22,6 +18,8 @@ public class ExceptionHandlerAdvice {
         if (ex instanceof ForbidException)
             status = HttpStatus.FORBIDDEN;
         if (ex instanceof BadRequestException)
+            status = HttpStatus.BAD_REQUEST;
+        if (ex instanceof NumberFormatException)
             status = HttpStatus.BAD_REQUEST;
         if (ex instanceof UnauthorizedException)
             status = HttpStatus.UNAUTHORIZED;

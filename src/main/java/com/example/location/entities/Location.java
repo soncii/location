@@ -2,8 +2,7 @@ package com.example.location.entities;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.persistence.*;
+import lombok.RequiredArgsConstructor;
 
 @Data
 @NoArgsConstructor

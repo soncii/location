@@ -1,5 +1,6 @@
 package com.example.location.services;
 
+import com.example.location.entities.Access;
 import com.example.location.util.Util;
 import com.example.location.dto.LocationDTO;
 import com.example.location.dto.SharedLocation;
@@ -27,7 +28,6 @@ public class LocationServiceImpl implements LocationService {
     private final AccessRepository accessRepository;
     private final UserRepository userRepository;
 
-    @Autowired
     public LocationServiceImpl(
         LocationRepository locationRepository,
         AccessRepository accessRepository,
@@ -56,21 +56,15 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public CompletableFuture<Location> saveLocation(String uid, String name, String address) {
+    public CompletableFuture<Location> saveLocation(Location location) {
 
-        Long uidL = Util.saveParseLong(uid);
-        if (uidL == null) {
-            logger.warn("Invalid user ID: {}", uid);
-            return CompletableFuture.completedFuture(null);
-        }
-
-        return userRepository.findById(uidL)
+        return userRepository.findById(location.getUid())
             .thenCompose(user -> {
                 if (!user.isPresent()) {
-                    logger.warn("User not found for ID: {}", uidL);
+                    logger.warn("User not found for ID: {}", location.getUid());
                     return CompletableFuture.completedFuture(null);
                 }
-                return locationRepository.save(new Location(uidL, name, address));
+                return locationRepository.save(location);
             });
     }
 

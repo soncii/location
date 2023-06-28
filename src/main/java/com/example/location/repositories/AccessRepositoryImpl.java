@@ -37,9 +37,8 @@ public class AccessRepositoryImpl implements AccessRepository {
     public CompletableFuture<List<UserAccessDto>> getUserAccessByLocationId(Long lid) {
 
         return CompletableFuture.supplyAsync(() -> {
-            String sql = "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " +
-                "JOIN users u ON a.uid = u.uid " +
-                "WHERE a.lid = ?";
+            String sql = "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " + "JOIN users u ON a" +
+                ".uid = u.uid " + "WHERE a.lid = ?";
             return jdbcTemplate.query(sql, new Object[]{lid}, userDtoRowMapper);
         });
     }
@@ -65,6 +64,7 @@ public class AccessRepositoryImpl implements AccessRepository {
 
     @Override
     public CompletableFuture<Access> save(Access a) {
+
         return CompletableFuture.supplyAsync(() -> {
             String sql = "INSERT INTO access (uid, lid, type) VALUES (?, ?, ?)";
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -84,7 +84,6 @@ public class AccessRepositoryImpl implements AccessRepository {
             return a;
         });
     }
-
 
     @Override
     public CompletableFuture<Boolean> update(Access a) {

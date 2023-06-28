@@ -1,10 +1,12 @@
 package com.example.location.services;
 
+import com.example.location.dto.AccessDTO;
 import com.example.location.dto.UserAccessDto;
 import com.example.location.entities.Access;
 import com.example.location.entities.User;
 import com.example.location.repositories.AccessRepository;
 import com.example.location.repositories.UserRepository;
+import com.example.location.util.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,36 +21,36 @@ public class AccessServiceImpl implements AccessService {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessServiceImpl.class);
 
-    @Autowired
+    final
     AccessRepository accessRepository;
 
-    @Autowired
+    final
     UserRepository userRepository;
 
     final String ACCESS_ADMIN = "admin";
     final String ACCESS_READ = "read-only";
 
-    public CompletableFuture<Access> saveAccess(String email, String shareMode, Long lid) {
+    public CompletableFuture<Access> saveAccess(AccessDTO accessDTO) {
 
-        Optional<User> user = userRepository.findByEmail(email).join();
+        Optional<User> user = userRepository.findByEmail(accessDTO.getEmail()).join();
         if (!user.isPresent()) {
-            logger.warn("User not found: {}", email);
-            return CompletableFuture.completedFuture(null);
+            logger.warn("User not found: {}", accessDTO.getEmail());
+            throw new BadRequestException("user not found");
         }
 
-        return accessRepository.findByUidAndLid(user.get().getUid(), lid)
+        return accessRepository.findByUidAndLid(user.get().getUid(), accessDTO.getLid())
             .thenCompose(access -> {
                 if (access.isPresent()) {
                     Access saving = access.get();
-                    if (!saving.getType().equals(shareMode)) {
-                        saving.setType(shareMode);
-                        logger.info("Access mode updated for user {} on location {}", email, lid);
+                    if (!saving.getType().equals(accessDTO.getShareMode())) {
+                        saving.setType(accessDTO.getShareMode());
+                        logger.info("Access mode updated for user {} on location {}", accessDTO.getEmail(), accessDTO.getLid());
                     }
                     return accessRepository.save(saving);
                 }
 
-                logger.info("New access created for user {} on location {}", email, lid);
-                return accessRepository.save(new Access(null, user.get().getUid(), lid, shareMode));
+                logger.info("New access created for user {} on location {}", accessDTO.getEmail(), accessDTO.getLid());
+                return accessRepository.save(new Access(null, user.get().getUid(), accessDTO.getLid(), accessDTO.getShareMode()));
             });
     }
 
@@ -115,8 +117,7 @@ public class AccessServiceImpl implements AccessService {
         return a;
     }
 
-    public AccessServiceImpl(AccessRepository accessRepository, UserRepository userRepository) {
-
+    public AccessServiceImpl(AccessRepository accessRepository, UserRepository userRepository   ) {
         this.accessRepository = accessRepository;
         this.userRepository = userRepository;
     }

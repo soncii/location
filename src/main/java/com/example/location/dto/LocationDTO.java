@@ -2,11 +2,9 @@ package com.example.location.dto;
 
 import com.example.location.entities.Access;
 import com.example.location.entities.Location;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import javax.persistence.Column;
-import java.util.ArrayList;
+
 import java.util.List;
 
 @Data
@@ -20,7 +18,6 @@ public class LocationDTO {
 
     private String address;
     private List<Access> permissions;
-
 
     public LocationDTO(Location l, List<Access> arrayList) {
 

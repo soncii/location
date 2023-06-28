@@ -2,6 +2,7 @@ package com.example.location.services;
 
 import com.example.location.dto.LocationDTO;
 import com.example.location.dto.SharedLocation;
+import com.example.location.entities.Access;
 import com.example.location.entities.Location;
 
 import java.util.List;
@@ -12,7 +13,7 @@ public interface LocationService {
 
     CompletableFuture<List<LocationDTO>> findUserLocations(String uidString);
 
-    CompletableFuture<Location> saveLocation(String uid, String name, String address);
+    CompletableFuture<Location> saveLocation(Location location);
 
     CompletableFuture<Optional<Location>> findById(Long lid);
 
