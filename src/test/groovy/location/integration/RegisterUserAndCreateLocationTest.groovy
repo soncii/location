@@ -51,9 +51,9 @@ class RegisterUserAndCreateLocationTest extends Specification {
     @Shared
     private long LID
 
-    private final static String EMAIL = "integrationtest123@gmail.com"
+    private static final String EMAIL = "integrationtest123@gmail.com"
 
-    private final static String PASSWORD = "password"
+    private static final String PASSWORD = "password"
 
     def setup() {
 
@@ -186,8 +186,8 @@ class RegisterUserAndCreateLocationTest extends Specification {
             def urlLocation = "http://localhost:" + port + "/location/" + LID
             def respUser, respLocation
         when:
-            respUser = restTemplate.exchange(urlUser, HttpMethod.DELETE, new HttpEntity<>(), String)
-            respLocation = restTemplate.exchange(urlLocation, HttpMethod.DELETE, new HttpEntity<>(), String)
+            respLocation = restTemplate.exchange(urlLocation, HttpMethod.DELETE, new HttpEntity<>(), Void)
+            respUser = restTemplate.exchange(urlUser, HttpMethod.DELETE, new HttpEntity<>(), Void)
         then:
             respUser.statusCode == HttpStatus.OK
             respLocation.statusCode == HttpStatus.OK

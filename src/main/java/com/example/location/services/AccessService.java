@@ -18,5 +18,5 @@ public interface AccessService {
 
     CompletableFuture<Boolean> change(Long lid, String email);
 
-    Void validateShareMode(String shareMode) throws BadRequestException;
+    Void validateShareMode(String shareMode) ;
 }

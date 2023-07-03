@@ -5,7 +5,6 @@ import com.example.location.entities.Location;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-
 import java.util.List;
 
 @Data

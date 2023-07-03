@@ -10,6 +10,7 @@ import com.example.location.util.DbSaveException;
 import com.example.location.util.ForbidException;
 
 import com.example.location.util.UnauthorizedException;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -21,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-
+@AllArgsConstructor
 @RestController
 public class MainController {
 
@@ -31,16 +32,10 @@ public class MainController {
     private final LocationService locationService;
     private static final String TOKEN_NEEDED = "authorization token is needed";
 
-    public MainController(UserService userService, LocationService locationService) {
-
-        this.userService = userService;
-        this.locationService = locationService;
-    }
-
     @GetMapping("/user/locations")
     public CompletableFuture<ResponseEntity<List<LocationDTO>>> index(
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "empty") String uid
-    ) throws BadRequestException {
+    ) {
 
         if (uid.equals("empty")) {
             logger.warn("Invalid or empty UID cookie received");
@@ -57,7 +52,7 @@ public class MainController {
     @PostMapping("/login")
     public CompletableFuture<ResponseEntity<Void>> loginUser(
         @RequestBody LoginDTO login, HttpServletResponse response
-    ) throws ForbidException {
+    )  {
 
         logger.info("Logging in user with email: {}", login.getEmail());
         logger.info("password: {}", login.getPassword());
@@ -90,6 +85,7 @@ public class MainController {
 
     @DeleteMapping("/user/{uid}")
     public CompletableFuture<ResponseEntity> deleteUser(@PathVariable("uid") Long uid) {
+
         return userService.deleteUser(uid).thenApply(deleted -> {
             if (deleted) {
                 return ResponseEntity.ok().build();
@@ -97,5 +93,4 @@ public class MainController {
             return ResponseEntity.badRequest().build();
         });
     }
-
 }

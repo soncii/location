@@ -9,20 +9,28 @@ import javax.sql.DataSource;
 
 @Configuration
 public class AppConfig {
+
     @Bean
     public UserRepository userRepository(JdbcTemplate jdbcTemplate) {
+
         return new UserRepositoryImpl(jdbcTemplate);
     }
+
     @Bean
     public LocationRepository locationRepository(JdbcTemplate jdbcTemplate) {
+
         return new LocationRepositoryImpl(jdbcTemplate);
     }
+
     @Bean
     public AccessRepository accessRepository(JdbcTemplate jdbcTemplate) {
+
         return new AccessRepositoryImpl(jdbcTemplate);
     }
+
     @Bean
     public JdbcTemplate jdbcTemplate(DataSource dataSource) {
+
         return new JdbcTemplate(dataSource);
     }
 }

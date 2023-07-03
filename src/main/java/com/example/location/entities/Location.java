@@ -10,11 +10,8 @@ import lombok.NoArgsConstructor;
 public class Location {
 
     private Long lid;
-
     private Long uid;
-
     private String name;
-
     private String address;
 
     public Location(long uidL, String name, String address) {

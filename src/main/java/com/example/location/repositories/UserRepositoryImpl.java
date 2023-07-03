@@ -1,7 +1,7 @@
 package com.example.location.repositories;
 
 import com.example.location.entities.User;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -15,14 +15,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Repository
+@AllArgsConstructor
 public class UserRepositoryImpl implements UserRepository {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public UserRepositoryImpl(JdbcTemplate jdbcTemplate) {
-
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public CompletableFuture<Optional<User>> findByEmailAndPassword(String email, String password) {
@@ -39,7 +35,7 @@ public class UserRepositoryImpl implements UserRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM users WHERE email = ?";
-            List<User> users = jdbcTemplate.query(sql,userRowMapper, email);
+            List<User> users = jdbcTemplate.query(sql, userRowMapper, email);
             return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
         });
     }
@@ -49,7 +45,7 @@ public class UserRepositoryImpl implements UserRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM users WHERE uid = ?";
-            List<User> users = jdbcTemplate.query(sql,userRowMapper,uid);
+            List<User> users = jdbcTemplate.query(sql, userRowMapper, uid);
             return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
         });
     }
@@ -78,7 +74,7 @@ public class UserRepositoryImpl implements UserRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "DELETE FROM users WHERE uid = ?";
-            return jdbcTemplate.update(sql, uid)!=0;
+            return jdbcTemplate.update(sql, uid) != 0;
         });
     }
 

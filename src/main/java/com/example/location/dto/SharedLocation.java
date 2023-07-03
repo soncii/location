@@ -11,11 +11,8 @@ import lombok.NoArgsConstructor;
 public class SharedLocation {
 
     private Long lid;
-
     private String email;
-
     private String name;
-
     private String address;
     private String accessType;
 

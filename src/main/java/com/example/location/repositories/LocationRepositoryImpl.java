@@ -2,6 +2,7 @@ package com.example.location.repositories;
 
 import com.example.location.dto.SharedLocation;
 import com.example.location.entities.Location;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -17,14 +18,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Repository
+@AllArgsConstructor
 public class LocationRepositoryImpl implements LocationRepository {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public LocationRepositoryImpl(JdbcTemplate jdbcTemplate) {
-
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public CompletableFuture<List<Location>> findAllByUid(Long uid) {
@@ -40,7 +37,7 @@ public class LocationRepositoryImpl implements LocationRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM location WHERE uid = ? AND lid = ?";
-            List<Location> locations = jdbcTemplate.query(sql,new LocationRowMapper(), uid, lid);
+            List<Location> locations = jdbcTemplate.query(sql, new LocationRowMapper(), uid, lid);
             return locations.isEmpty() ? Optional.empty() : Optional.of(locations.get(0));
         });
     }
@@ -49,11 +46,8 @@ public class LocationRepositoryImpl implements LocationRepository {
     public CompletableFuture<List<SharedLocation>> findAllSharedLocation(Long uid) {
 
         return CompletableFuture.supplyAsync(() -> {
-            String sql = "SELECT l.lid, u.email, l.name, l.address, a.type AS accessType " +
-                "FROM location l " +
-                "JOIN access a ON l.lid = a.lid " +
-                "JOIN users u ON u.uid = l.uid " +
-                "WHERE a.uid = ?";
+            String sql = "SELECT l.lid, u.email, l.name, l.address, a.type AS accessType " + "FROM location l " +
+                "JOIN access a ON l.lid = a.lid " + "JOIN users u ON u.uid = l.uid " + "WHERE a.uid = ?";
             return jdbcTemplate.query(sql, new SharedLocationRowMapper(), uid);
         });
     }
@@ -91,10 +85,10 @@ public class LocationRepositoryImpl implements LocationRepository {
     @Override
     public CompletableFuture<Boolean> deleteById(Long lid) {
 
-            return CompletableFuture.supplyAsync(() -> {
-                String sql = "DELETE FROM location WHERE lid = ?";
-                return jdbcTemplate.update(sql, lid) > 0;
-            });
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "DELETE FROM location WHERE lid = ?";
+            return jdbcTemplate.update(sql, lid) > 0;
+        });
     }
 
     private static class LocationRowMapper implements RowMapper<Location> {

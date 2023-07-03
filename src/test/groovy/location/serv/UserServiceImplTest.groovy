@@ -7,7 +7,6 @@ import com.example.location.repositories.UserRepository
 import com.example.location.services.UserServiceImpl
 import spock.lang.Specification
 
-
 import java.util.concurrent.CompletableFuture
 
 class UserServiceImplTest extends Specification {

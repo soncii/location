@@ -2,6 +2,7 @@ package com.example.location.repositories;
 
 import com.example.location.dto.UserAccessDto;
 import com.example.location.entities.Access;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -15,14 +16,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Repository
+@AllArgsConstructor
 public class AccessRepositoryImpl implements AccessRepository {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public AccessRepositoryImpl(JdbcTemplate jdbcTemplate) {
-
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public CompletableFuture<List<Access>> findAllByLid(Long lid) {
@@ -37,8 +34,9 @@ public class AccessRepositoryImpl implements AccessRepository {
     public CompletableFuture<List<UserAccessDto>> getUserAccessByLocationId(Long lid) {
 
         return CompletableFuture.supplyAsync(() -> {
-            String sql = "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " + "JOIN users u ON a" +
-                ".uid = u.uid " + "WHERE a.lid = ?";
+            String sql =
+                "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " + "JOIN users u ON " + "a" +
+                    ".uid = u.uid " + "WHERE a.lid = ?";
             return jdbcTemplate.query(sql, userDtoRowMapper, lid);
         });
     }

@@ -69,7 +69,6 @@ class ShareLocationTest extends Specification {
             def location = new Location(null, UidOwner, "Test Location", "Test Address")
             def responseLocation = restTemplate.postForEntity("http://localhost:" + port + "/location", new HttpEntity<>(objectMapper.writeValueAsString(location), headers), Location)
             LID = responseLocation.getBody().getLid()
-
     }
 
     def "Test Share Location"() {
@@ -168,9 +167,10 @@ class ShareLocationTest extends Specification {
             def urlLocation = baseUrl + "/location/" + LID
             def respOwner, respGuest, respLocation
         when:
+            respLocation = restTemplate.exchange(urlLocation, HttpMethod.DELETE, new HttpEntity<>(), Void)
             respOwner = restTemplate.exchange(urlOwner, HttpMethod.DELETE, new HttpEntity<>(), Void)
             respGuest = restTemplate.exchange(urlGuest, HttpMethod.DELETE, new HttpEntity<>(), Void)
-            respLocation = restTemplate.exchange(urlLocation, HttpMethod.DELETE, new HttpEntity<>(), Void)
+
         then:
             respOwner.statusCode == HttpStatus.OK
             respGuest.statusCode == HttpStatus.OK

@@ -2,13 +2,11 @@ package com.example.location.services;
 
 import com.example.location.dto.LocationDTO;
 import com.example.location.dto.SharedLocation;
-import com.example.location.entities.Access;
 import com.example.location.entities.Location;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 public interface LocationService {
 
