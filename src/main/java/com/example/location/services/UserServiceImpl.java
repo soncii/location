@@ -69,6 +69,10 @@ public class UserServiceImpl implements UserService {
             .thenApply(Optional::isPresent);
     }
 
+    @Override
+    public CompletableFuture<Boolean> deleteUser(Long uid) {
+        return userRepository.deleteById(uid);
+    }
     private boolean isEmpty(User user) {
 
         return (user.getFirstName() == null || user.getLastName() == null

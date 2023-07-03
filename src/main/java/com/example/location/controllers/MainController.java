@@ -12,18 +12,15 @@ import com.example.location.util.ForbidException;
 import com.example.location.util.UnauthorizedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 public class MainController {
@@ -32,7 +29,7 @@ public class MainController {
 
     private final UserService userService;
     private final LocationService locationService;
-    private static final String COOKIE_NEEDED = "cookie value is needed";
+    private static final String TOKEN_NEEDED = "authorization token is needed";
 
     public MainController(UserService userService, LocationService locationService) {
 
@@ -47,7 +44,7 @@ public class MainController {
 
         if (uid.equals("empty")) {
             logger.warn("Invalid or empty UID cookie received");
-            throw new BadRequestException(COOKIE_NEEDED);
+            throw new BadRequestException(TOKEN_NEEDED);
         }
 
         logger.info("Retrieving locations for UID: {}", uid);
@@ -59,10 +56,11 @@ public class MainController {
 
     @PostMapping("/login")
     public CompletableFuture<ResponseEntity<Void>> loginUser(
-        LoginDTO login, HttpServletResponse response
+        @RequestBody LoginDTO login, HttpServletResponse response
     ) throws ForbidException {
 
         logger.info("Logging in user with email: {}", login.getEmail());
+        logger.info("password: {}", login.getPassword());
         return userService.authorize(login.getEmail(), login.getPassword()).thenCompose(user -> {
             if (!user.isPresent()) {
                 logger.warn("Invalid email or password");
@@ -76,10 +74,9 @@ public class MainController {
     }
 
     @PostMapping(value = "/register")
-    public CompletableFuture<ResponseEntity<User>> registerUser(User user) {
+    public CompletableFuture<ResponseEntity<User>> registerUser(@RequestBody User user) {
 
         logger.info("Registering user with email: {}", user.getEmail());
-
         return userService.insertUser(user).thenApply(saved -> {
             if (saved.getUid() == null) {
                 logger.error("Failed to insert user to database");
@@ -90,4 +87,15 @@ public class MainController {
             return ResponseEntity.ok(saved);
         });
     }
+
+    @DeleteMapping("/user/{uid}")
+    public CompletableFuture<ResponseEntity> deleteUser(@PathVariable("uid") Long uid) {
+        return userService.deleteUser(uid).thenApply(deleted -> {
+            if (deleted) {
+                return ResponseEntity.ok().build();
+            }
+            return ResponseEntity.badRequest().build();
+        });
+    }
+
 }

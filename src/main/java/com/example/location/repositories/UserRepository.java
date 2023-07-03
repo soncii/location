@@ -14,4 +14,6 @@ public interface UserRepository {
     CompletableFuture<Optional<User>> findById(Long uid);
 
     CompletableFuture<User> save(User l);
+
+    CompletableFuture<Boolean> deleteById(Long uid);
 }

@@ -1,5 +1,6 @@
 package location.serv
 
+import com.example.location.dto.AccessDTO
 import com.example.location.dto.UserAccessDto
 import com.example.location.entities.Access
 import com.example.location.entities.User
@@ -22,14 +23,15 @@ class AccessServiceImplTest extends Specification {
         def email = "test@example.com"
         User user = new User(uid:1L, email: email)
         def lid = 1L, aid=1L
-        Access access = new Access(aid: aid, uid: user.uid, lid: lid, type: shareMode)
+        def dto = new AccessDTO(lid, email,shareMode)
+        def access = new Access(aid: aid, uid: user.uid, lid: lid, type: shareMode)
 
         given:
         accessRepository.save(_ as Access) >> CompletableFuture.completedFuture( access)
         userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.of(user))
         accessRepository.findByUidAndLid(user.uid, lid) >> CompletableFuture.completedFuture(Optional.empty())
         expect:
-        accessService.saveAccess(email, shareMode, lid).join()==access
+        accessService.saveAccess(dto).join()==access
 
     }
 

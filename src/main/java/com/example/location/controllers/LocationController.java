@@ -71,10 +71,10 @@ public class LocationController {
             });
     }
 
-    @PostMapping(value = "/", produces = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "")
     public CompletableFuture<ResponseEntity<Location>> saveLocation(
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid,
-        Location location
+        @RequestBody Location location
     ) throws DbSaveException {
 
         if (uid.equals(EMPTY)) {
@@ -91,7 +91,23 @@ public class LocationController {
                 }
 
                 logger.info("Location saved successfully");
-                return ResponseEntity.ok(location);
+                return ResponseEntity.status(HttpStatus.CREATED).body(location);
+            });
+    }
+
+    @DeleteMapping(value = "/{lid}")
+    public CompletableFuture<ResponseEntity> deleteLocation(@PathVariable("lid") Long lid) {
+
+        logger.info("Deleting location with ID: {}", lid);
+        return locationService.deleteById(lid)
+            .thenApply(deleted -> {
+                if (Boolean.FALSE.equals(deleted)) {
+                    logger.error("Failed to delete location");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
+
+                logger.info("Location deleted successfully");
+                return ResponseEntity.ok().build();
             });
     }
 
@@ -109,16 +125,18 @@ public class LocationController {
         return locationService.findAllLocations(uid)
             .thenApply(locations -> {
                 logger.info("Retrieved all locations successfully");
+                logger.info("Locations: {}", locations);
                 return ResponseEntity.ok(locations);
             });
     }
 
     @PostMapping(value = "/share")
     public CompletableFuture<ResponseEntity<Access>> saveShare(
-        AccessDTO access
+        @RequestBody AccessDTO access
     ) throws DbSaveException {
 
-        logger.info("Saving share for location with ID: " + access);
+        accessService.validateShareMode(access.getShareMode());
+        logger.info("Saving share for location with ID: {}", access);
         return accessService.saveAccess(access)
             .thenApply(saved -> {
                 if (saved.getAid() == null) {
@@ -133,7 +151,7 @@ public class LocationController {
 
     @PostMapping(value = "/unfriend")
     public CompletableFuture<ResponseEntity<Void>> unfriend(
-        UserLocationDTO userLocation,
+        @RequestBody UserLocationDTO userLocation,
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) throws ForbidException {
 
@@ -159,7 +177,7 @@ public class LocationController {
 
     @PostMapping(value = "/access", produces = APPLICATION_JSON_VALUE)
     public CompletableFuture<ResponseEntity<Void>> changeMode(
-        UserLocationDTO userLocation,
+        @RequestBody UserLocationDTO userLocation,
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) {
 

@@ -2,12 +2,14 @@ package com.example.location.dto;
 
 import com.example.location.entities.Access;
 import com.example.location.entities.Location;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 
 import java.util.List;
 
 @Data
+@AllArgsConstructor
 public class LocationDTO {
 
     private Long id;

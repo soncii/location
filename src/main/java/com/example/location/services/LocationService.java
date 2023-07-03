@@ -8,6 +8,7 @@ import com.example.location.entities.Location;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public interface LocationService {
 
@@ -18,4 +19,6 @@ public interface LocationService {
     CompletableFuture<Optional<Location>> findById(Long lid);
 
     CompletableFuture<List<SharedLocation>> findAllLocations(String uid);
+
+    CompletableFuture<Boolean> deleteById(Long lid);
 }

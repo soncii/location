@@ -107,6 +107,14 @@ public class AccessServiceImpl implements AccessService {
             });
     }
 
+    @Override
+    public Void validateShareMode(String shareMode) throws BadRequestException {
+        if (shareMode.equals(ACCESS_ADMIN) || shareMode.equals(ACCESS_READ)) {
+            return null;
+        }
+        throw new BadRequestException("Invalid share mode");
+    }
+
     private Access changeAccess(Access a) {
 
         if (a.getType().equals(ACCESS_ADMIN)) {

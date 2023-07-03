@@ -29,7 +29,7 @@ public class AccessRepositoryImpl implements AccessRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM access WHERE lid = ?";
-            return jdbcTemplate.query(sql, new Object[]{lid}, accessRowMapper);
+            return jdbcTemplate.query(sql, accessRowMapper, lid);
         });
     }
 
@@ -39,7 +39,7 @@ public class AccessRepositoryImpl implements AccessRepository {
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT a.aid, u.firstname, u.lastname, a.type, u.email FROM access a " + "JOIN users u ON a" +
                 ".uid = u.uid " + "WHERE a.lid = ?";
-            return jdbcTemplate.query(sql, new Object[]{lid}, userDtoRowMapper);
+            return jdbcTemplate.query(sql, userDtoRowMapper, lid);
         });
     }
 
@@ -57,7 +57,7 @@ public class AccessRepositoryImpl implements AccessRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM access WHERE uid = ? AND lid = ?";
-            List<Access> accesses = jdbcTemplate.query(sql, new Object[]{uid, lid}, accessRowMapper);
+            List<Access> accesses = jdbcTemplate.query(sql, accessRowMapper, uid, lid);
             return accesses.isEmpty() ? Optional.empty() : Optional.of(accesses.get(0));
         });
     }

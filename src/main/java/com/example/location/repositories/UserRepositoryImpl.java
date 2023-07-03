@@ -1,6 +1,7 @@
 package com.example.location.repositories;
 
 import com.example.location.entities.User;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -28,7 +29,7 @@ public class UserRepositoryImpl implements UserRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
-            List<User> users = jdbcTemplate.query(sql, new Object[]{email, password}, userRowMapper);
+            List<User> users = jdbcTemplate.query(sql, userRowMapper, email, password);
             return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
         });
     }
@@ -38,7 +39,7 @@ public class UserRepositoryImpl implements UserRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM users WHERE email = ?";
-            List<User> users = jdbcTemplate.query(sql, new Object[]{email}, userRowMapper);
+            List<User> users = jdbcTemplate.query(sql,userRowMapper, email);
             return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
         });
     }
@@ -48,7 +49,7 @@ public class UserRepositoryImpl implements UserRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM users WHERE uid = ?";
-            List<User> users = jdbcTemplate.query(sql, new Object[]{uid}, userRowMapper);
+            List<User> users = jdbcTemplate.query(sql,userRowMapper,uid);
             return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
         });
     }
@@ -69,6 +70,15 @@ public class UserRepositoryImpl implements UserRepository {
             }, keyHolder);
             user.setUid(keyHolder.getKey().longValue());
             return user;
+        });
+    }
+
+    @Override
+    public CompletableFuture<Boolean> deleteById(Long uid) {
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "DELETE FROM users WHERE uid = ?";
+            return jdbcTemplate.update(sql, uid)!=0;
         });
     }
 

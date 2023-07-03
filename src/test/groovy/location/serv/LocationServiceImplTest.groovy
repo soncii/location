@@ -1,5 +1,6 @@
 package location.serv
 
+import com.example.location.dto.AccessDTO
 import com.example.location.dto.LocationDTO
 import com.example.location.dto.SharedLocation
 import com.example.location.entities.Location
@@ -67,15 +68,16 @@ class LocationServiceImplTest extends Specification {
 
     def "saveLocation should return the saved location when valid parameters are provided"() {
         given:
-        def uid = "1"
+        def uid = 1L
         def name = "Location 1"
         def address = "Address 1"
-        def user = new User(uid: 1L)
+        def location = new Location(uid, name, address)
+        def user = new User(uid: uid)
         userRepository.findById(1L) >> CompletableFuture.completedFuture(Optional.of(user))
-        locationRepository.save(_ as Location) >> { Location location -> CompletableFuture.completedFuture(location) }
+        locationRepository.save(_ as Location) >> { Location saved -> CompletableFuture.completedFuture(saved) }
 
         when:
-        def result = locationService.saveLocation(uid, name, address).join()
+        def result = locationService.saveLocation(location).join()
 
         then:
 
@@ -83,34 +85,19 @@ class LocationServiceImplTest extends Specification {
 
     }
 
-    def "saveLocation should return null when the UID is not a valid number"() {
-        given:
-        def uid = "invalid"
-        def name = "Location 1"
-        def address = "Address 1"
-
-        when:
-        def result = locationService.saveLocation(uid, name, address)
-
-        then:
-
-            result.get() == null
-
-    }
 
     def "saveLocation should return null when the user with the given UID does not exist"() {
         given:
-        def uid = "1"
+        def uid = 1l
         def name = "Location 1"
         def address = "Address 1"
-        userRepository.findById(1L) >>CompletableFuture.completedFuture(Optional.empty())
-
+        userRepository.findById(uid) >>CompletableFuture.completedFuture(Optional.empty())
+        def location = new Location(uid, name, address)
         when:
-        def result = locationService.saveLocation(uid, name, address)
+        def result = locationService.saveLocation(location)
 
         then:
-
-            result.get() == null
+        result.get() == null
 
     }
 

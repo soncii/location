@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public interface LocationRepository {
 
@@ -19,4 +20,6 @@ public interface LocationRepository {
     CompletableFuture<Location> save(Location l);
 
     CompletableFuture<Optional<Location>> findById(Long uid);
+
+    CompletableFuture<Boolean> deleteById(Long lid);
 }

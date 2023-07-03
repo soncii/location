@@ -102,4 +102,17 @@ public class LocationServiceImpl implements LocationService {
             return shared;
         });
     }
+
+    @Override
+    public CompletableFuture<Boolean> deleteById(Long lid) {
+
+            return locationRepository.findById(lid)
+                .thenCompose(location -> {
+                    if (!location.isPresent()) {
+                        logger.warn("Location not found for ID: {}", lid);
+                        return CompletableFuture.completedFuture(false);
+                    }
+                    return locationRepository.deleteById(lid);
+                });
+    }
 }

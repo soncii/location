@@ -31,7 +31,7 @@ public class LocationRepositoryImpl implements LocationRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM location WHERE uid = ?";
-            return jdbcTemplate.query(sql, new Object[]{uid}, new LocationRowMapper());
+            return jdbcTemplate.query(sql, new LocationRowMapper(), uid);
         });
     }
 
@@ -40,7 +40,7 @@ public class LocationRepositoryImpl implements LocationRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM location WHERE uid = ? AND lid = ?";
-            List<Location> locations = jdbcTemplate.query(sql, new Object[]{uid, lid}, new LocationRowMapper());
+            List<Location> locations = jdbcTemplate.query(sql,new LocationRowMapper(), uid, lid);
             return locations.isEmpty() ? Optional.empty() : Optional.of(locations.get(0));
         });
     }
@@ -54,7 +54,7 @@ public class LocationRepositoryImpl implements LocationRepository {
                 "JOIN access a ON l.lid = a.lid " +
                 "JOIN users u ON u.uid = l.uid " +
                 "WHERE a.uid = ?";
-            return jdbcTemplate.query(sql, new Object[]{uid}, new SharedLocationRowMapper());
+            return jdbcTemplate.query(sql, new SharedLocationRowMapper(), uid);
         });
     }
 
@@ -74,19 +74,27 @@ public class LocationRepositoryImpl implements LocationRepository {
 
             Long lid = keyHolder.getKey().longValue();
             l.setLid(lid);
-
             return l;
         });
     }
 
     @Override
-    public CompletableFuture<Optional<Location>> findById(Long uid) {
+    public CompletableFuture<Optional<Location>> findById(Long lid) {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "SELECT * FROM location WHERE lid = ?";
-            List<Location> locations = jdbcTemplate.query(sql, new Object[]{uid}, new LocationRowMapper());
+            List<Location> locations = jdbcTemplate.query(sql, new LocationRowMapper(), lid);
             return locations.isEmpty() ? Optional.empty() : Optional.of(locations.get(0));
         });
+    }
+
+    @Override
+    public CompletableFuture<Boolean> deleteById(Long lid) {
+
+            return CompletableFuture.supplyAsync(() -> {
+                String sql = "DELETE FROM location WHERE lid = ?";
+                return jdbcTemplate.update(sql, lid) > 0;
+            });
     }
 
     private static class LocationRowMapper implements RowMapper<Location> {
