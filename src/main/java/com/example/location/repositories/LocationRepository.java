@@ -2,21 +2,24 @@ package com.example.location.repositories;
 
 import com.example.location.dto.SharedLocation;
 import com.example.location.entities.Location;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-@Repository
-public interface LocationRepository extends JpaRepository<Location,Long> {
+public interface LocationRepository {
 
-    List<Location> findAllByUid(Long uid);
+    CompletableFuture<List<Location>> findAllByUid(Long uid);
 
-    Optional<Location> findByUidAndLid(Long uid, Long lid);
-    @Query(name = "AllLocations", nativeQuery = true)
-    List<SharedLocation> findAllSharedLocation(@Param("uid")Long uid);
+    CompletableFuture<Optional<Location>> findByUidAndLid(Long uid, Long lid);
 
+    CompletableFuture<List<SharedLocation>> findAllSharedLocation(@Param("uid") Long uid);
+
+    CompletableFuture<Location> save(Location l);
+
+    CompletableFuture<Optional<Location>> findById(Long uid);
+
+    CompletableFuture<Boolean> deleteById(Long lid);
 }

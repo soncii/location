@@ -1,27 +1,20 @@
 package com.example.location.entities;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import javax.persistence.*;
+import lombok.NoArgsConstructor;
 
 @Data
-@Entity
-@Table(name = "users")
+@AllArgsConstructor
+@NoArgsConstructor
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private Long uid;
 
-    @Column(name = "firstname", nullable = false)
     private String firstName;
 
-    @Column(name = "lastname", nullable = false)
     private String lastName;
-
-    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "password", nullable = false)
     private String password;
-
 }

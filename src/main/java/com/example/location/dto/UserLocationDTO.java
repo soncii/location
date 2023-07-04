@@ -1,17 +1,14 @@
 package com.example.location.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
-public class UserAccessDto {
-
-    private String firstName;
-
-    private String lastName;
+public class UserLocationDTO {
 
     private String email;
-
-    private String accessType;
+    private Long lid;
 }
