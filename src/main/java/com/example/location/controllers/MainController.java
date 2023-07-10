@@ -30,7 +30,6 @@ public class MainController {
 
     private final UserService userService;
     private final LocationService locationService;
-    private static final String TOKEN_NEEDED = "authorization token is needed";
 
     @GetMapping("/user/locations")
     public CompletableFuture<ResponseEntity<List<LocationDTO>>> index(
@@ -39,7 +38,7 @@ public class MainController {
 
         if (uid.equals("empty")) {
             logger.warn("Invalid or empty UID cookie received");
-            throw new BadRequestException(TOKEN_NEEDED);
+            throw new BadRequestException();
         }
 
         logger.info("Retrieving locations for UID: {}", uid);
@@ -59,7 +58,7 @@ public class MainController {
         return userService.authorize(login.getEmail(), login.getPassword()).thenCompose(user -> {
             if (!user.isPresent()) {
                 logger.warn("Invalid email or password");
-                throw new UnauthorizedException("email or password is incorrect");
+                throw new UnauthorizedException();
             }
 
             logger.info("User logged in successfully");
@@ -75,7 +74,7 @@ public class MainController {
         return userService.insertUser(user).thenApply(saved -> {
             if (saved.getUid() == null) {
                 logger.error("Failed to insert user to database");
-                throw new DbSaveException("couldn't insert user to db");
+                throw new DbSaveException();
             }
 
             logger.info("User registered successfully");

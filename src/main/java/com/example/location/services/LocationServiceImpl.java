@@ -66,21 +66,21 @@ public class LocationServiceImpl implements LocationService {
             return CompletableFuture.completedFuture(null);
         }
 
-        Optional<User> user = userRepository.findById(uid).join();
-        if (!user.isPresent()) {
-            logger.warn("User not found for ID: {}", uid);
-            return CompletableFuture.completedFuture(null);
-        }
+        return userRepository.findById(uid).thenCompose(user -> {
+            if (!user.isPresent()) {
+                logger.warn("User not found for ID: {}", uid);
+                return CompletableFuture.completedFuture(null);
+            }
+            CompletableFuture<List<SharedLocation>> allSharedLocations = locationRepository.findAllSharedLocation(uid);
+            CompletableFuture<List<Location>> ownerLocations = locationRepository.findAllByUid(uid);
 
-        CompletableFuture<List<SharedLocation>> allSharedLocations = locationRepository.findAllSharedLocation(uid);
-        CompletableFuture<List<Location>> ownerLocations = locationRepository.findAllByUid(uid);
-
-        return allSharedLocations.thenCombine(ownerLocations, (shared, owner) -> {
-            List<SharedLocation> modified =
-                owner.stream().map(location -> CompletableFuture.supplyAsync(() -> new SharedLocation(location,
-                    user.get().getEmail()))).map(CompletableFuture::join).collect(Collectors.toList());
-            shared.addAll(modified);
-            return shared;
+            return allSharedLocations.thenCombine(ownerLocations, (shared, owner) -> {
+                List<SharedLocation> modified =
+                    owner.stream().map(location -> CompletableFuture.supplyAsync(() -> new SharedLocation(location,
+                        user.get().getEmail()))).map(CompletableFuture::join).collect(Collectors.toList());
+                shared.addAll(modified);
+                return shared;
+            });
         });
     }
 

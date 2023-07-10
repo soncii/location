@@ -7,6 +7,7 @@ import com.example.location.entities.User;
 import com.example.location.repositories.AccessRepository;
 import com.example.location.repositories.UserRepository;
 import com.example.location.util.BadRequestException;
+import com.example.location.util.NotFoundException;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,26 +32,26 @@ public class AccessServiceImpl implements AccessService {
 
     public CompletableFuture<Access> saveAccess(AccessDTO accessDTO) {
 
-        Optional<User> user = userRepository.findByEmail(accessDTO.getEmail()).join();
-        if (!user.isPresent()) {
-            logger.warn("User not found: {}", accessDTO.getEmail());
-            throw new BadRequestException("user not found");
-        }
-
-        return accessRepository.findByUidAndLid(user.get().getUid(), accessDTO.getLid()).thenCompose(access -> {
-            if (access.isPresent()) {
-                Access saving = access.get();
-                if (!saving.getType().equals(accessDTO.getShareMode())) {
-                    saving.setType(accessDTO.getShareMode());
-                    logger.info("Access mode updated for user {} on location {}", accessDTO.getEmail(),
-                        accessDTO.getLid());
-                }
-                return accessRepository.save(saving);
+        return userRepository.findByEmail(accessDTO.getEmail()).thenCompose(user -> {
+            if (!user.isPresent()) {
+                logger.warn("User not found: {}", accessDTO.getEmail());
+                throw new NotFoundException("User not found");
             }
+            return accessRepository.findByUidAndLid(user.get().getUid(), accessDTO.getLid()).thenCompose(access -> {
+                if (access.isPresent()) {
+                    Access saving = access.get();
+                    if (!saving.getType().equals(accessDTO.getShareMode())) {
+                        saving.setType(accessDTO.getShareMode());
+                        logger.info("Access mode updated for user {} on location {}", accessDTO.getEmail(),
+                            accessDTO.getLid());
+                    }
+                    return accessRepository.save(saving);
+                }
 
-            logger.info("New access created for user {} on location {}", accessDTO.getEmail(), accessDTO.getLid());
-            return accessRepository.save(new Access(null, user.get().getUid(), accessDTO.getLid(),
-                accessDTO.getShareMode()));
+                logger.info("New access created for user {} on location {}", accessDTO.getEmail(), accessDTO.getLid());
+                return accessRepository.save(new Access(null, user.get().getUid(), accessDTO.getLid(),
+                    accessDTO.getShareMode()));
+            });
         });
     }
 

@@ -2,8 +2,8 @@ package com.example.location.util;
 
 public class DbSaveException extends RuntimeException {
 
-    public DbSaveException(String message) {
+    public DbSaveException() {
 
-        super(message);
+        super("Could not save to database");
     }
 }

@@ -38,9 +38,7 @@ public class LocationController {
 
     final UserService userService;
 
-    private static final String ACCESS_DENIED = "Access Denied";
     private static final String EMPTY = "empty";
-    private static final String HEADER_NEEDED = "Authorization token is needed";
 
     @GetMapping(value = "/{lid}")
     public CompletableFuture<ResponseEntity<Location>> getLocation(
@@ -50,25 +48,28 @@ public class LocationController {
 
         if (uid.equals(EMPTY)) {
             logger.warn("Invalid or empty UID cookie received");
-            throw new BadRequestException(HEADER_NEEDED);
+            throw new BadRequestException();
         }
 
         logger.info("Retrieving location with ID: {}", lid);
-        Boolean authorized = userService.authorizeOwner(uid, lid).join();
-        if (Boolean.FALSE.equals(authorized)) {
-            logger.warn("User is not authorized to access the location");
-            throw new ForbidException(ACCESS_DENIED);
-        }
-
-        return locationService.findById(lid).thenApply(location -> {
-            if (!location.isPresent()) {
-                logger.error("Location not found");
-                throw new NoSuchElementException("Location Not Found");
+        return userService.authorizeOwner(uid, lid).thenCompose(auth -> {
+            if (Boolean.FALSE.equals(auth)) {
+                logger.warn("User is not authorized to access the location");
+                throw new ForbidException();
             }
+            return locationService.findById(lid).thenApply(location -> {
+                if (!location.isPresent()) {
+                    logger.error("Location not found");
+                    throw new NoSuchElementException("Location Not Found");
+                }
 
-            logger.info("Retrieved location successfully");
-            return ResponseEntity.ok(location.get());
+                logger.info("Retrieved location successfully");
+                return ResponseEntity.ok(location.get());
+            });
         });
+
+
+
     }
 
     @PostMapping(value = "")
@@ -79,14 +80,14 @@ public class LocationController {
 
         if (uid.equals(EMPTY)) {
             logger.warn("Invalid or empty UID cookie received");
-            throw new BadRequestException(HEADER_NEEDED);
+            throw new BadRequestException();
         }
         location.setUid(Long.parseLong(uid));
         logger.info("Saving location: {}", location);
         return locationService.saveLocation(location).thenApply(saved -> {
             if (saved.getLid() == null) {
                 logger.error("Failed to insert location to database");
-                throw new DbSaveException("Couldn't insert location to db");
+                throw new DbSaveException();
             }
 
             logger.info("Location saved successfully");
@@ -116,7 +117,7 @@ public class LocationController {
 
         if (uid.equals(EMPTY)) {
             logger.warn("Invalid or empty UID received");
-            throw new BadRequestException(HEADER_NEEDED);
+            throw new BadRequestException();
         }
 
         logger.info("Retrieving all locations for UID: {}", uid);
@@ -137,7 +138,7 @@ public class LocationController {
         return accessService.saveAccess(access).thenApply(saved -> {
             if (saved.getAid() == null) {
                 logger.error("Failed to insert access to database");
-                throw new DbSaveException("Couldn't insert access to db");
+                throw new DbSaveException();
             }
 
             logger.info("Share saved successfully");
@@ -154,7 +155,7 @@ public class LocationController {
         return userService.authorizeOwner(uid, userLocation.getLid()).thenCompose(authorized -> {
             if (Boolean.FALSE.equals(authorized)) {
                 logger.warn("User is not authorized to unfriend from the location");
-                throw new ForbidException(ACCESS_DENIED);
+                throw new ForbidException();
             }
 
             return accessService.delete(userLocation.getLid(), userLocation.getEmail()).thenApply(result -> {
@@ -178,7 +179,7 @@ public class LocationController {
         return userService.authorizeOwner(uid, userLocation.getLid()).thenCompose(authorized -> {
             if (Boolean.FALSE.equals(authorized)) {
                 logger.warn("User is not authorized to change access mode for the location");
-                throw new ForbidException(ACCESS_DENIED);
+                throw new ForbidException();
             }
 
             return accessService.change(userLocation.getLid(), userLocation.getEmail()).thenApply(result -> {
