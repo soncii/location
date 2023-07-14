@@ -4,8 +4,7 @@ import com.example.location.entities.User;
 import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -15,9 +14,8 @@ import java.util.regex.Pattern;
 
 @Service
 @AllArgsConstructor
+@Log4j2
 public class UserServiceImpl implements UserService {
-
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
@@ -26,12 +24,12 @@ public class UserServiceImpl implements UserService {
     public CompletableFuture<Optional<User>> authorize(String email, String password) {
 
         if (email == null || password == null) {
-            logger.warn("Invalid email or password");
+            log.warn("Invalid email or password");
             return CompletableFuture.completedFuture(Optional.empty());
         }
 
         if (!isValidEmail(email)) {
-            logger.warn("Invalid email format: {}", email);
+            log.warn("Invalid email format: {}", email);
             return CompletableFuture.completedFuture(Optional.empty());
         }
 
@@ -42,7 +40,7 @@ public class UserServiceImpl implements UserService {
     public CompletableFuture<User> insertUser(User user) {
 
         if (isEmpty(user)) {
-            logger.warn("User is empty");
+            log.warn("User is empty");
             CompletableFuture.completedFuture(user);
         }
 

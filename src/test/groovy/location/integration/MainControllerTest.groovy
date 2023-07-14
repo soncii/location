@@ -5,15 +5,23 @@ import com.example.location.dto.LoginDTO
 import com.example.location.entities.Location
 import com.example.location.entities.User
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.support.GeneratedKeyHolder
+import org.springframework.jdbc.support.KeyHolder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import spock.lang.Shared
 import spock.lang.Specification
+
+import javax.sql.DataSource
+import java.sql.PreparedStatement
+import java.sql.Statement
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -28,6 +36,25 @@ class MainControllerTest extends Specification {
     @Autowired
     private ObjectMapper objectMapper
 
+
+    @Value('${spring.datasource.url}')
+    @Shared
+    private String url
+
+    @Value('${spring.datasource.username}')
+    @Shared
+    private String username
+
+    @Value('${spring.datasource.password}')
+    @Shared
+    private String password
+
+    @Value('${spring.datasource.driverClassName}"')
+    @Shared
+    private String driverClassName
+
+//    @Autowired
+//    private DataSource dataSource
     @Autowired
     private JdbcTemplate jdbcTemplate
 
@@ -40,10 +67,47 @@ class MainControllerTest extends Specification {
     @Shared
     private long LID
 
-    def "Test registering a user"() {
+    def addUser() {
+        String sql = "INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update({ con ->
+            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+            ps.setString(1, "Test")
+            ps.setString(2, "User")
+            ps.setString(3, EMAIL)
+            ps.setString(4, PASSWORD)
+            return ps
+        }, keyHolder)
+        UID = keyHolder.getKey().longValue()
+    }
 
+    def addLocation() {
+        String sql = "INSERT INTO location (uid, name, address) VALUES (?, ?, ?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update({ con ->
+            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, UID)
+            ps.setString(2, "Test location")
+            ps.setString(3, "Test address")
+            return ps;
+        }, keyHolder)
+
+        LID = keyHolder.getKey().longValue();
+    }
+
+    def setup() {
+        addUser()
+    }
+
+    def cleanup() {
+        def update = jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UID)
+        print("Deleted " + update + " users")
+    }
+
+    def "Test registering a user"() {
         given:
-            def user = new User(null, "User", "Test", EMAIL, PASSWORD)
+
+            def user = new User(null, "User", "Test", "test1@email.com", PASSWORD)
 
             def request = mockMvc.perform(MockMvcRequestBuilders
                 .post("/register")
@@ -59,9 +123,11 @@ class MainControllerTest extends Specification {
         then:
             registeredUser != null
             registeredUser.uid != null
-            registeredUser.email == EMAIL
+            registeredUser.email == "test1@email.com"
             registeredUser.firstName == user.firstName
             registeredUser.lastName == user.lastName
+        cleanup:
+            jdbcTemplate.update("DELETE FROM users WHERE uid = ?", registeredUser.uid)
     }
 
     def "Testing user login"() {
@@ -94,7 +160,7 @@ class MainControllerTest extends Specification {
                 .andReturn()
 
         expect:
-            def response = mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isUnauthorized()).andReturn().response
+            mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isUnauthorized())
     }
 
     def "Test retrieving test user locations, should return empty list"() {
@@ -133,9 +199,10 @@ class MainControllerTest extends Specification {
             response.contentAsString.contains(LID.toString())
     }
 
-    def "Test retrieving added location"() {
+    def "Test retrieving locations when location added"() {
 
         given:
+            addLocation()
             def request = mockMvc.perform(MockMvcRequestBuilders.get("/location/$LID")
                 .header("Authorization", UID.toString()))
                 .andExpect(request().asyncStarted())
@@ -143,27 +210,13 @@ class MainControllerTest extends Specification {
 
         when:
             def response = mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isOk()).andReturn().response
-
+            def location = objectMapper.readValue(response.contentAsString, Location.class)
         then:
             response.contentAsString != null
-            response.contentAsString.contains(LID.toString())
+            location.getLid() == LID
     }
 
-    def "Test retrieving test user locations, should return one location"() {
 
-        given:
-            def request = mockMvc.perform(MockMvcRequestBuilders.get("/user/locations")
-                .header("Authorization", UID.toString()))
-                .andExpect(request().asyncStarted())
-                .andReturn()
-
-        when:
-            def response = mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isOk()).andReturn().response
-
-        then:
-            response.contentAsString != null
-            response.contentAsString.contains(LID.toString())
-    }
 
     def "Test retrieving user locations with empty UID"() {
 
@@ -178,11 +231,11 @@ class MainControllerTest extends Specification {
             response.contentAsString == "Authorization header is missing"
     }
 
-    def "cleanupSpecCustom"() {
-
-        def update = jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UID)
-        print("Deleted " + update + " users")
-        expect:
-            update == 1
-    }
+//    def "cleanupSpecCustom"() {
+//
+//        def update = jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UID)
+//        print("Deleted " + update + " users")
+//        expect:
+//            update == 1
+//    }
 }

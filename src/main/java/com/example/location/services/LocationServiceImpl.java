@@ -8,8 +8,8 @@ import com.example.location.repositories.AccessRepository;
 import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,9 +19,8 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Log4j2
 public class LocationServiceImpl implements LocationService {
-
-    private static final Logger logger = LoggerFactory.getLogger(LocationServiceImpl.class);
 
     private final LocationRepository locationRepository;
     private final AccessRepository accessRepository;
@@ -32,7 +31,7 @@ public class LocationServiceImpl implements LocationService {
 
         Long uid = Long.parseLong(uidString);
         if (uid == null) {
-            logger.warn("Invalid user ID: {}", uidString);
+            log.warn("Invalid user ID: {}", uidString);
             return CompletableFuture.completedFuture(null);
         }
 
@@ -44,7 +43,7 @@ public class LocationServiceImpl implements LocationService {
 
         return userRepository.findById(location.getUid()).thenCompose(user -> {
             if (!user.isPresent()) {
-                logger.warn("User not found for ID: {}", location.getUid());
+                log.warn("User not found for ID: {}", location.getUid());
                 return CompletableFuture.completedFuture(null);
             }
             return locationRepository.save(location);
@@ -62,13 +61,13 @@ public class LocationServiceImpl implements LocationService {
 
         Long uid = Long.parseLong(uidStr);
         if (uid == null) {
-            logger.warn("Invalid user ID: {}", uidStr);
+            log.warn("Invalid user ID: {}", uidStr);
             return CompletableFuture.completedFuture(null);
         }
 
         return userRepository.findById(uid).thenCompose(user -> {
             if (!user.isPresent()) {
-                logger.warn("User not found for ID: {}", uid);
+                log.warn("User not found for ID: {}", uid);
                 return CompletableFuture.completedFuture(null);
             }
             CompletableFuture<List<SharedLocation>> allSharedLocations = locationRepository.findAllSharedLocation(uid);
@@ -89,7 +88,7 @@ public class LocationServiceImpl implements LocationService {
 
         return locationRepository.findById(lid).thenCompose(location -> {
             if (!location.isPresent()) {
-                logger.warn("Location not found for ID: {}", lid);
+                log.warn("Location not found for ID: {}", lid);
                 return CompletableFuture.completedFuture(false);
             }
             return locationRepository.deleteById(lid);
