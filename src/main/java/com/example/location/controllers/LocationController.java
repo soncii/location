@@ -1,5 +1,6 @@
 package com.example.location.controllers;
 
+import com.example.location.annotation.AuthorizationRequired;
 import com.example.location.dto.AccessDTO;
 import com.example.location.dto.SharedLocation;
 import com.example.location.dto.UserLocationDTO;
@@ -8,7 +9,6 @@ import com.example.location.entities.Location;
 import com.example.location.services.AccessService;
 import com.example.location.services.LocationService;
 import com.example.location.services.UserService;
-import com.example.location.util.BadRequestException;
 import com.example.location.util.DbException;
 import com.example.location.util.ForbidException;
 
@@ -38,15 +38,11 @@ public class LocationController {
     private static final String EMPTY = "empty";
 
     @GetMapping("/{lid}")
+    @AuthorizationRequired
     public CompletableFuture<ResponseEntity<Location>> getLocation(
         @PathVariable("lid") Long lid,
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) {
-
-        if (uid.equals(EMPTY)) {
-            log.warn("Invalid or empty UID cookie received");
-            throw new BadRequestException();
-        }
 
         log.info("Retrieving location with ID: {}", lid);
         return userService.authorizeOwner(uid, lid).thenCompose(auth -> {
@@ -70,15 +66,12 @@ public class LocationController {
     }
 
     @PostMapping("")
+    @AuthorizationRequired
     public CompletableFuture<ResponseEntity<Location>> saveLocation(
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid,
         @RequestBody Location location
     ) {
 
-        if (uid.equals(EMPTY)) {
-            log.warn("Invalid or empty UID cookie received");
-            throw new BadRequestException();
-        }
         location.setUid(Long.parseLong(uid));
         log.info("Saving location: {}", location);
         return locationService.saveLocation(location).thenApply(saved -> {
@@ -108,14 +101,10 @@ public class LocationController {
     }
 
     @GetMapping("/all")
+    @AuthorizationRequired
     public CompletableFuture<ResponseEntity<List<SharedLocation>>> allLocations(
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) {
-
-        if (uid.equals(EMPTY)) {
-            log.warn("Invalid or empty UID received");
-            throw new BadRequestException();
-        }
 
         log.info("Retrieving all locations for UID: {}", uid);
         return locationService.findAllLocations(uid).thenApply(locations -> {

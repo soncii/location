@@ -1,11 +1,11 @@
 package com.example.location.controllers;
 
+import com.example.location.annotation.AuthorizationRequired;
 import com.example.location.dto.LocationDTO;
 import com.example.location.dto.LoginDTO;
 import com.example.location.entities.User;
 import com.example.location.services.LocationService;
 import com.example.location.services.UserService;
-import com.example.location.util.BadRequestException;
 import com.example.location.util.DbException;
 
 import com.example.location.util.UnauthorizedException;
@@ -31,14 +31,10 @@ public class MainController {
     private final LocationService locationService;
 
     @GetMapping("/user/locations")
+    @AuthorizationRequired
     public CompletableFuture<ResponseEntity<List<LocationDTO>>> index(
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "empty") String uid
     ) {
-        if (uid.equals("empty")) {
-            log.warn("Invalid or empty UID cookie received");
-            throw new BadRequestException();
-        }
-
         log.info("Retrieving locations for UID: {}", uid);
         return locationService.findUserLocations(uid).thenApply(locations -> {
             log.info("Retrieved locations successfully");
