@@ -78,10 +78,10 @@ class AccessServiceImplTest extends Specification {
             userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.empty())
 
         when:
-            def result = accessService.delete(lid, email)
+            def result = accessService.delete(lid, email).join()
 
         then:
-            result.get() == false
+            result == false
     }
 
     def "change should return true when access is changed"() {
@@ -97,10 +97,10 @@ class AccessServiceImplTest extends Specification {
             accessRepository.update(changedAccess) >> CompletableFuture.completedFuture(true)
 
         when:
-            def result = accessService.change(lid, email)
+            def result = accessService.change(lid, email).join()
 
         then:
-            result.get() == true
+            result == true
     }
 
     def "change should return false when user doesn't exist"() {
@@ -112,10 +112,10 @@ class AccessServiceImplTest extends Specification {
             userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.empty())
 
         when:
-            def result = accessService.change(lid, email)
+            def result = accessService.change(lid, email).join()
 
         then:
-            result.get() == false
+            result == false
     }
 
     def "changeAccess should change access type from admin to read-only"() {

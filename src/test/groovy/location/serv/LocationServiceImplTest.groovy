@@ -40,10 +40,10 @@ class LocationServiceImplTest extends Specification {
             accessRepository.findAllByLid(location2.lid) >> CompletableFuture.completedFuture([])
 
         when:
-            def result = locationService.findUserLocations(uidString)
+            def result = locationService.findUserLocations(uidString).join()
 
         then:
-            result.get() == [new LocationDTO(location1, []),
+            result == [new LocationDTO(location1, []),
                              new LocationDTO(location2, [])]
     }
 
@@ -55,11 +55,11 @@ class LocationServiceImplTest extends Specification {
             locationRepository.findAllByUid(uid) >> CompletableFuture.completedFuture(new ArrayList<LocationDTO>())
 
         when:
-            def result = locationService.findUserLocations(uidString)
+            def result = locationService.findUserLocations(uidString).join()
 
         then:
 
-            result.get() == []
+            result == []
     }
 
     def "saveLocation should return the saved location when valid parameters are provided"() {
@@ -90,10 +90,10 @@ class LocationServiceImplTest extends Specification {
             userRepository.findById(uid) >> CompletableFuture.completedFuture(Optional.empty())
             def location = new Location(uid, name, address)
         when:
-            def result = locationService.saveLocation(location)
+            def result = locationService.saveLocation(location).join()
 
         then:
-            result.get() == null
+            result == null
     }
 
     def "findById should return the location with the given ID"() {
@@ -104,11 +104,11 @@ class LocationServiceImplTest extends Specification {
             locationRepository.findById(lid) >> CompletableFuture.completedFuture(Optional.of(location))
 
         when:
-            def result = locationService.findById(lid)
+            def result = locationService.findById(lid).join()
 
         then:
 
-            result.get() == Optional.of(location)
+            result == Optional.of(location)
     }
 
     def "findAllLocations should return a list of shared locations for a given user"() {
@@ -138,10 +138,10 @@ class LocationServiceImplTest extends Specification {
             def uid = "empty"
 
         when:
-            def result = locationService.findAllLocations(uid)
+            def result = locationService.findAllLocations(uid).join()
 
         then:
 
-            result.get() == null
+            result == null
     }
 }

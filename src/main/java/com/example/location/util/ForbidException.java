@@ -2,8 +2,8 @@ package com.example.location.util;
 
 public class ForbidException extends RuntimeException {
 
-    public ForbidException(String message) {
+    public ForbidException() {
 
-        super(message);
+        super("Access Denied");
     }
 }
