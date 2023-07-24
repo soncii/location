@@ -7,6 +7,7 @@ import com.example.location.entities.Access;
 import com.example.location.repositories.AccessRepository;
 import com.example.location.repositories.UserRepository;
 import com.example.location.util.BadRequestException;
+import com.example.location.util.DbException;
 import com.example.location.util.NotFoundException;
 import com.example.location.util.Util;
 import lombok.AllArgsConstructor;
@@ -107,7 +108,10 @@ public class AccessServiceImpl implements AccessService {
             if (accessUpdated) {
                 log.info("Access mode changed for user {} on location {}", email, lid);
                 historyEventPublisher.publishHistoryUpdatedEvent(uid, "ACCESS", access.get(), changedAccess);
-            } else log.error("Failed to update access mode for user {} on location {}", email, lid);
+            } else {
+                log.error("Failed to update access mode for user {} on location {}", email, lid);
+                throw new DbException();
+            }
 
             return accessUpdated;
         });

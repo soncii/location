@@ -10,10 +10,7 @@ import com.example.location.entities.Location;
 import com.example.location.services.AccessService;
 import com.example.location.services.LocationService;
 import com.example.location.services.UserService;
-import com.example.location.util.DbException;
 import com.example.location.util.ForbidException;
-import com.example.location.util.NotFoundException;
-import com.example.location.util.Util;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @AllArgsConstructor
@@ -52,27 +50,16 @@ public class LocationController {
 
     @GetMapping("/{lid}")
     @AuthorizationRequired
-    public CompletableFuture<ResponseEntity<Location>> getLocation(
+    public CompletableFuture<ResponseEntity<Optional<Location>>> getLocation(
         @PathVariable("lid") Long lid,
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) {
 
-        log.info("Retrieving location with ID: {}", lid);
-        return userService.authorizeOwner(uid, lid).thenCompose(auth -> {
-            if (Boolean.FALSE.equals(auth)) {
-                log.warn("User is not authorized to access the location");
-                throw new ForbidException();
-            }
-            return locationService.findById(lid).thenApply(location -> {
-                if (!location.isPresent()) {
-                    log.error("Location not found");
-                    throw new NotFoundException("Location");
-                }
-
-                log.info("Retrieved location successfully");
-                return ResponseEntity.ok(location.get());
+        return userService.authorizeOwner(uid, lid)
+            .thenCompose(authorized -> {
+                if (Boolean.FALSE.equals(authorized)) throw new ForbidException();
+                return locationService.findById(lid).thenApply(ResponseEntity::ok);
             });
-        });
     }
 
     @PostMapping("")
@@ -93,15 +80,8 @@ public class LocationController {
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) {
 
-        return locationService.deleteById(lid).thenApply(deleted -> {
-            if (Boolean.FALSE.equals(deleted)) {
-                log.error("Failed to delete location {}", lid);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-            }
-            historyEventPublisher.publishHistoryDeletedEvent(Long.parseLong(uid), LOCATION, lid);
-            log.info("Location deleted successfully {}", lid);
-            return ResponseEntity.ok().build();
-        });
+        return locationService.deleteById(lid)
+            .thenApply(ResponseEntity::ok);
     }
 
     @GetMapping("/all")
@@ -110,12 +90,7 @@ public class LocationController {
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) {
 
-        log.info("Retrieving all locations for UID: {}", uid);
-        return locationService.findAllLocations(uid).thenApply(locations -> {
-            log.info("Retrieved all locations successfully");
-            log.info("Locations: {}", locations);
-            return ResponseEntity.ok(locations);
-        });
+        return locationService.findAllLocations(uid).thenApply(ResponseEntity::ok);
     }
 
     @PostMapping("/share")
@@ -126,63 +101,35 @@ public class LocationController {
     ) {
 
         accessService.validateShareMode(access.getShareMode());
-        return accessService.saveAccess(access).thenApply(saved -> {
-            if (saved.getAid() == null) {
-                log.error("Failed to insert access to database");
-                throw new DbException();
-            }
-            historyEventPublisher.publishHistoryCreatedEvent(Long.parseLong(uid), ACCESS, saved);
-            log.info("Share saved successfully");
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-        });
+        return accessService.saveAccess(access)
+            .thenApply(ResponseEntity.status(HttpStatus.CREATED)::body);
     }
 
     @PostMapping("/unfriend")
-    public CompletableFuture<ResponseEntity<Void>> unfriend(
+    public CompletableFuture<ResponseEntity> unfriend(
         @RequestBody UserLocationDTO userLocation,
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) {
 
-        return userService.authorizeOwner(uid, userLocation.getLid()).thenCompose(authorized -> {
-            if (Boolean.FALSE.equals(authorized)) {
-                log.warn("User is not authorized to unfriend from the location");
-                throw new ForbidException();
-            }
-
-            return accessService.delete(Long.parseLong(uid), userLocation.getLid(), userLocation.getEmail()).thenApply(result -> {
-                if (Boolean.TRUE.equals(result)) {
-                    log.info("User {} successfully unfriended from the location {}",
-                        Util.hideEmail(userLocation.getEmail()), userLocation.getLid());
-                    historyEventPublisher.publishHistoryDeletedEvent(Long.parseLong(uid), ACCESS, userLocation);
-                    return ResponseEntity.ok().build();
-                } else {
-                    log.error("Failed to unfriend user from the location");
-                    throw new DbException();
-                }
-            });
+        return userService.authorizeOwner(uid, userLocation.getLid())
+            .thenCompose(authorized -> {
+            if (Boolean.FALSE.equals(authorized)) throw new ForbidException();
+            return accessService.delete(Long.parseLong(uid), userLocation.getLid(), userLocation.getEmail())
+                .thenApply(ResponseEntity::ok);
         });
     }
 
     @PostMapping("/access")
     @AuthorizationRequired
-    public CompletableFuture<ResponseEntity<Void>> changeMode(
+    public CompletableFuture<ResponseEntity> changeMode(
         @RequestBody UserLocationDTO userLocation,
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
     ) {
 
         return userService.authorizeOwner(uid, userLocation.getLid()).thenCompose(authorized -> {
-            if (Boolean.FALSE.equals(authorized)) {
-                log.warn("User is not authorized to change access mode for the location");
-                throw new ForbidException();
-            }
-
-            return accessService.change(Long.parseLong(uid), userLocation.getLid(), userLocation.getEmail()).thenApply(result -> {
-                if (Boolean.TRUE.equals(result)) {
-                    return ResponseEntity.ok().build();
-                } else {
-                    return ResponseEntity.internalServerError().build();
-                }
-            });
+            if (Boolean.FALSE.equals(authorized)) throw new ForbidException();
+            return accessService.change(Long.parseLong(uid), userLocation.getLid(), userLocation.getEmail())
+                .thenApply(ResponseEntity::ok);
         });
     }
 }

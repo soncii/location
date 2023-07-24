@@ -5,6 +5,7 @@ import com.example.location.entities.User;
 import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
 import com.example.location.util.DbException;
+import com.example.location.util.Util;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public CompletableFuture<Optional<User>> authorize(String email, String password) {
 
+        log.info("Logging in user with email: {}", Util.hideEmail(email));
         if (email == null || password == null) {
             log.warn("Invalid email or password");
             return CompletableFuture.completedFuture(Optional.empty());
@@ -43,6 +45,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public CompletableFuture<User> insertUser(User user) {
 
+        log.info("Registering user with email: {}", Util.hideEmail(user.getEmail()));
         if (isEmpty(user)) {
             log.warn("User is empty");
             CompletableFuture.completedFuture(user);
@@ -66,8 +69,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public CompletableFuture<Boolean> authorizeOwner(String uidString, Long lid) {
+
         Long uid = Long.parseLong(uidString);
-        System.out.println("uid: " + uid + " lid: " + lid);
         return locationRepository.findByUidAndLid(uid, lid).thenApply(Optional::isPresent);
     }
 
@@ -81,7 +84,7 @@ public class UserServiceImpl implements UserService {
                 return CompletableFuture.completedFuture(true);
             }
             log.warn("User not found for ID: {}", uid);
-            return CompletableFuture.completedFuture(false);
+            throw new DbException();
         });
     }
 

@@ -63,18 +63,26 @@ public class LocationServiceImpl implements LocationService {
     @Override
     public CompletableFuture<Optional<Location>> findById(Long lid) {
 
-        return locationRepository.findById(lid);
+        log.info("Retrieving location with ID: {}", lid);
+        return locationRepository.findById(lid).thenApply(location -> {
+            if (!location.isPresent()) {
+                log.warn("Location not found for ID: {}", lid);
+                throw new NotFoundException("Location");
+            }
+            return location;
+        });
     }
 
     @Override
     public CompletableFuture<List<SharedLocation>> findAllLocations(String uidStr) throws NumberFormatException{
+
 
         Long uid = Long.parseLong(uidStr);
         if (uid == null) {
             log.warn("Invalid user ID: {}", uidStr);
             return CompletableFuture.completedFuture(null);
         }
-
+        log.info("Retrieving all locations for UID: {}", uid);
         return userRepository.findById(uid).thenCompose(user -> {
             if (!user.isPresent()) {
                 log.warn("User not found for ID: {}", uid);
