@@ -1,8 +1,10 @@
 package com.example.location.services;
 
+import com.example.location.component.HistoryEventPublisher;
 import com.example.location.entities.User;
 import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
+import com.example.location.util.DbException;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
+
+    private final HistoryEventPublisher historyEventPublisher;
 
     @Override
     public CompletableFuture<Optional<User>> authorize(String email, String password) {
@@ -44,7 +48,14 @@ public class UserServiceImpl implements UserService {
             CompletableFuture.completedFuture(user);
         }
 
-        return userRepository.save(user);
+        return userRepository.save(user).thenCompose(saved -> {
+            if (saved.getUid() == null) {
+                log.error("User not saved {}", user);
+                throw new DbException();
+            }
+            historyEventPublisher.publishHistoryCreatedEvent(saved.getUid(), "USER", saved);
+            return CompletableFuture.completedFuture(saved);
+        });
     }
 
     @Override
@@ -55,16 +66,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public CompletableFuture<Boolean> authorizeOwner(String uidString, Long lid) {
-
         Long uid = Long.parseLong(uidString);
-        if (uid == null) return CompletableFuture.completedFuture(false);
+        System.out.println("uid: " + uid + " lid: " + lid);
         return locationRepository.findByUidAndLid(uid, lid).thenApply(Optional::isPresent);
     }
 
     @Override
     public CompletableFuture<Boolean> deleteUser(Long uid) {
 
-        return userRepository.deleteById(uid);
+        return userRepository.deleteById(uid).thenCompose(deleted -> {
+            if (deleted) {
+                log.info("User deleted successfully");
+                historyEventPublisher.publishHistoryDeletedEvent(uid, "USER", uid);
+                return CompletableFuture.completedFuture(true);
+            }
+            log.warn("User not found for ID: {}", uid);
+            return CompletableFuture.completedFuture(false);
+        });
     }
 
     private boolean isEmpty(User user) {

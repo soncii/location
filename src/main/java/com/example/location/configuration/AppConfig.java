@@ -1,6 +1,7 @@
 package com.example.location.configuration;
 
 import com.example.location.repositories.*;
+import com.example.location.services.HistoryService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,8 +30,15 @@ public class AppConfig {
     }
 
     @Bean
+    public HistoryRepository historyRepository(JdbcTemplate jdbcTemplate) {
+
+        return new HistoryRepositoryImpl(jdbcTemplate);
+    }
+    @Bean
     public JdbcTemplate jdbcTemplate(DataSource dataSource) {
 
         return new JdbcTemplate(dataSource);
     }
+
+
 }

@@ -14,9 +14,9 @@ public interface AccessService {
 
     CompletableFuture<List<UserAccessDto>> getUsersOnLocation(Long lid);
 
-    CompletableFuture<Boolean> delete(Long lid, String email);
+    CompletableFuture<Boolean> delete(Long uid, Long lid, String email);
 
-    CompletableFuture<Boolean> change(Long lid, String email);
+    CompletableFuture<Boolean> change(Long uid, Long lid, String email);
 
     Void validateShareMode(String shareMode) ;
 }

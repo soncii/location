@@ -1,6 +1,7 @@
 package com.example.location.annotation;
 
 import com.example.location.util.BadRequestException;
+import com.example.location.util.Util;
 import lombok.extern.log4j.Log4j2;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -19,7 +20,7 @@ public class AuthorizationAspect {
         for (Object arg : args) {
             if (arg instanceof String) {
                 String uid = (String) arg;
-                if (uid.equals("empty")) {
+                if (uid.equals("empty") || !Util.isValidLong(uid)) {
                     log.warn("Invalid or empty UID header received");
                     throw new BadRequestException();
                 }

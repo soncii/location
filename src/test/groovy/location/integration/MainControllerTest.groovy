@@ -5,7 +5,6 @@ import com.example.location.dto.LoginDTO
 import com.example.location.entities.Location
 import com.example.location.entities.User
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -19,7 +18,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.sql.DataSource
 import java.sql.PreparedStatement
 import java.sql.Statement
 
@@ -35,7 +33,6 @@ class MainControllerTest extends Specification {
 
     @Autowired
     private ObjectMapper objectMapper
-
 
     @Value('${spring.datasource.url}')
     @Shared
@@ -53,8 +50,6 @@ class MainControllerTest extends Specification {
     @Shared
     private String driverClassName
 
-//    @Autowired
-//    private DataSource dataSource
     @Autowired
     private JdbcTemplate jdbcTemplate
 
@@ -68,6 +63,7 @@ class MainControllerTest extends Specification {
     private long LID
 
     def addUser() {
+
         String sql = "INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update({ con ->
@@ -82,6 +78,7 @@ class MainControllerTest extends Specification {
     }
 
     def addLocation() {
+
         String sql = "INSERT INTO location (uid, name, address) VALUES (?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update({ con ->
@@ -96,15 +93,18 @@ class MainControllerTest extends Specification {
     }
 
     def setup() {
+
         addUser()
     }
 
     def cleanup() {
+
         def update = jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UID)
         print("Deleted " + update + " users")
     }
 
     def "Test registering a user"() {
+
         given:
 
             def user = new User(null, "User", "Test", "test1@email.com", PASSWORD)
@@ -192,11 +192,12 @@ class MainControllerTest extends Specification {
 
         when:
             def response = mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isCreated()).andReturn().response
-            LID = objectMapper.readValue(response.contentAsString, Location).lid
+            def lid = objectMapper.readValue(response.contentAsString, Location).lid
 
         then:
-            response.contentAsString != null
-            response.contentAsString.contains(LID.toString())
+            lid != null
+        cleanup:
+            jdbcTemplate.update("DELETE FROM location WHERE lid = ?", lid)
     }
 
     def "Test retrieving locations when location added"() {
@@ -216,8 +217,6 @@ class MainControllerTest extends Specification {
             location.getLid() == LID
     }
 
-
-
     def "Test retrieving user locations with empty UID"() {
 
         given:
@@ -231,11 +230,11 @@ class MainControllerTest extends Specification {
             response.contentAsString == "Authorization header is missing"
     }
 
-//    def "cleanupSpecCustom"() {
-//
-//        def update = jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UID)
-//        print("Deleted " + update + " users")
-//        expect:
-//            update == 1
-//    }
+    //    def "cleanupSpecCustom"() {
+    //
+    //        def update = jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UID)
+    //        print("Deleted " + update + " users")
+    //        expect:
+    //            update == 1
+    //    }
 }

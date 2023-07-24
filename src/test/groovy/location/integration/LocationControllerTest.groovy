@@ -1,12 +1,14 @@
 package location.integration
 
 import com.example.location.LocationApplication
+import com.example.location.component.HistoryEventPublisher
 import com.example.location.dto.AccessDTO
 import com.example.location.dto.SharedLocation
 import com.example.location.dto.UserLocationDTO
 import com.example.location.entities.Access
 import com.example.location.entities.Location
 import com.example.location.entities.User
+import com.example.location.services.HistoryService
 import com.example.location.services.LocationService
 import com.example.location.services.UserService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -46,6 +48,8 @@ class LocationControllerTest extends Specification {
     JdbcTemplate jdbcTemplate
     @Autowired
     private LocationService locationService
+    @Autowired
+    private HistoryService historyService
 
     @Autowired
     private ObjectMapper objectMapper

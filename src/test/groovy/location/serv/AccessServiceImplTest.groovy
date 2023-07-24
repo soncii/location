@@ -1,5 +1,6 @@
 package location.serv
 
+import com.example.location.component.HistoryEventPublisher
 import com.example.location.dto.AccessDTO
 import com.example.location.dto.UserAccessDto
 import com.example.location.entities.Access
@@ -7,16 +8,18 @@ import com.example.location.entities.User
 import com.example.location.repositories.AccessRepository
 import com.example.location.repositories.UserRepository
 import com.example.location.services.AccessServiceImpl
+import com.example.location.util.NotFoundException
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
 
 class AccessServiceImplTest extends Specification {
 
-    AccessRepository accessRepository = Stub(AccessRepository)
-    UserRepository userRepository = Stub(UserRepository)
+    AccessRepository accessRepository = Mock(AccessRepository)
+    UserRepository userRepository = Mock(UserRepository)
+    HistoryEventPublisher historyEventPublisher = Mock(HistoryEventPublisher)
 
-    AccessServiceImpl accessService = new AccessServiceImpl(accessRepository, userRepository)
+    AccessServiceImpl accessService = new AccessServiceImpl(accessRepository, userRepository, historyEventPublisher)
 
     def "saveAccess returns optional with aid 1"() {
 
@@ -31,8 +34,11 @@ class AccessServiceImplTest extends Specification {
             accessRepository.save(_ as Access) >> CompletableFuture.completedFuture(access)
             userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.of(user))
             accessRepository.findByUidAndLid(user.uid, lid) >> CompletableFuture.completedFuture(Optional.empty())
-        expect:
-            accessService.saveAccess(dto).join() == access
+        when:
+            def result =  accessService.saveAccess(dto).join()
+        then:
+            result == access
+            1 * historyEventPublisher.publishHistoryCreatedEvent(user.uid, "ACCESS", access)
     }
 
     def "getUsersOnLocation should return list of UserAccessDto"() {
@@ -62,10 +68,11 @@ class AccessServiceImplTest extends Specification {
             accessRepository.deleteByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(1)
 
         when:
-            def result = accessService.delete(lid, email).join()
+            def result = accessService.delete(uid,lid, email).join()
 
         then:
             result == true
+            1 * historyEventPublisher.publishHistoryDeletedEvent(uid, "ACCESS", new Access(null, uid, lid, null))
     }
 
     def "delete should return false when user doesn't exist"() {
@@ -78,15 +85,17 @@ class AccessServiceImplTest extends Specification {
             userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.empty())
 
         when:
-            def result = accessService.delete(lid, email).join()
+            def result = accessService.delete(uid, lid, email).join()
 
         then:
             result == false
+            0 * historyEventPublisher.publishHistoryDeletedEvent(_)
     }
 
     def "change should return true when access is changed"() {
 
         given:
+            Long uid = 1L
             Long lid = 1L
             String email = "test@example.com"
             Access existingAccess = new Access(uid: 1L, lid: lid, type: "admin")
@@ -94,28 +103,41 @@ class AccessServiceImplTest extends Specification {
 
             userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.of(new User(uid: 1L)))
             accessRepository.findByUidAndLid(1L, lid) >> CompletableFuture.completedFuture(Optional.of(existingAccess))
+            accessService.changeAccess(_ as Access) >> changedAccess
             accessRepository.update(changedAccess) >> CompletableFuture.completedFuture(true)
 
+
         when:
-            def result = accessService.change(lid, email).join()
+            def result = accessService.change(uid, lid, email).join()
+
 
         then:
             result == true
+            1 * historyEventPublisher.publishHistoryUpdatedEvent(uid, "ACCESS", existingAccess, changedAccess)
     }
 
     def "change should return false when user doesn't exist"() {
 
         given:
+            Long uid = 1L
             Long lid = 1L
             String email = "test@example.com"
 
             userRepository.findByEmail(email) >> CompletableFuture.completedFuture(Optional.empty())
 
+
         when:
-            def result = accessService.change(lid, email).join()
+            def result = accessService.change(uid, lid, email).exceptionally { throwable ->
+                if (throwable.cause instanceof NotFoundException) {
+                    return false
+                } else {
+                    throw throwable
+                }
+            }.join()
 
         then:
             result == false
+            0 * historyEventPublisher.publishHistoryUpdatedEvent(_)
     }
 
     def "changeAccess should change access type from admin to read-only"() {

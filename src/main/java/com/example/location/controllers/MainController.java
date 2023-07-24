@@ -9,6 +9,7 @@ import com.example.location.services.UserService;
 import com.example.location.util.DbException;
 
 import com.example.location.util.UnauthorizedException;
+import com.example.location.util.Util;
 import lombok.AllArgsConstructor;
 
 import lombok.extern.log4j.Log4j2;
@@ -47,15 +48,13 @@ public class MainController {
         @RequestBody LoginDTO login, HttpServletResponse response
     )  {
 
-        log.info("Logging in user with email: {}", login.getEmail());
-        log.info("password: {}", login.getPassword());
+        log.info("Logging in user with email: {}", Util.hideEmail(login.getEmail()));
         return userService.authorize(login.getEmail(), login.getPassword()).thenCompose(user -> {
             if (!user.isPresent()) {
                 log.warn("Invalid email or password");
                 throw new UnauthorizedException();
             }
 
-            log.info("User logged in successfully");
             response.addHeader(HttpHeaders.AUTHORIZATION, user.get().getUid().toString());
             return CompletableFuture.completedFuture(new ResponseEntity<>(HttpStatus.OK));
         });
@@ -64,7 +63,7 @@ public class MainController {
     @PostMapping("/register")
     public CompletableFuture<ResponseEntity<User>> registerUser(@RequestBody User user) {
 
-        log.info("Registering user with email: {}", user.getEmail());
+        log.info("Registering user with email: {}", Util.hideEmail(user.getEmail()));
         return userService.insertUser(user).thenApply(saved -> {
             if (saved.getUid() == null) {
                 log.error("Failed to insert user to database");

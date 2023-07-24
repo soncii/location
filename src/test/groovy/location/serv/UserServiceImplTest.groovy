@@ -1,5 +1,6 @@
 package location.serv
 
+import com.example.location.component.HistoryEventPublisher
 import com.example.location.entities.Location
 import com.example.location.entities.User
 import com.example.location.repositories.LocationRepository
@@ -15,7 +16,9 @@ class UserServiceImplTest extends Specification {
 
     LocationRepository locationRepository = Stub(LocationRepository)
 
-    UserServiceImpl userService = new UserServiceImpl(userRepository, locationRepository)
+    HistoryEventPublisher historyEventPublisher = Mock(HistoryEventPublisher)
+
+    UserServiceImpl userService = new UserServiceImpl(userRepository, locationRepository, historyEventPublisher)
 
     def "authorize should return user when email and password are valid"() {
 
@@ -55,13 +58,15 @@ class UserServiceImplTest extends Specification {
 
         given:
             def user = new User(firstName: "John", lastName: "Doe", email: "test@example.com", password: "password")
-            userRepository.save(user) >> CompletableFuture.completedFuture(user)
+            def saved = new User(uid: 1L, firstName: "John", lastName: "Doe", email: "test@example.com", password: "password")
+            userRepository.save(user) >> CompletableFuture.completedFuture(saved)
 
         when:
             def result = userService.insertUser(user).join()
 
         then:
-            result == user
+            result == saved
+            1 * historyEventPublisher.publishHistoryCreatedEvent(saved.uid, "USER", saved)
     }
 
     def "findUserById should return user optional when the user exists"() {
@@ -97,22 +102,13 @@ class UserServiceImplTest extends Specification {
         given:
             def uidString = "1"
             def lid = 1L
-            locationRepository.findByUidAndLid(_, _) >> CompletableFuture.completedFuture(Optional.of(new Location()))
+            locationRepository.findByUidAndLid(1L, lid) >> CompletableFuture.completedFuture(Optional.of(new Location()))
 
         when:
             def result = userService.authorizeOwner(uidString, lid).join()
 
         then:
             result
-    }
-
-    def "authorizeOwner should return false when uidString is not a valid Long"() {
-
-        when:
-            def result = userService.authorizeOwner("invalid", 1L).join()
-
-        then:
-            !result
     }
 
     def "authorizeOwner should return false when Location does not exist"() {
@@ -127,6 +123,34 @@ class UserServiceImplTest extends Specification {
 
         then:
             !result
+    }
+
+    def "deleteUser should return true and publish event when user exists and is deleted successfully"() {
+
+        given:
+            def uid = 1L
+            userRepository.deleteById(uid) >> CompletableFuture.completedFuture(true)
+
+        when:
+            def result = userService.deleteUser(uid).join()
+
+        then:
+            result == true
+            1 * historyEventPublisher.publishHistoryDeletedEvent(uid, "USER", uid)
+    }
+
+    def "deleteUser should return false and publish event when user does not exist"() {
+
+        given:
+            def uid = 2L
+            userRepository.deleteById(uid) >> CompletableFuture.completedFuture(false)
+
+        when:
+            def result = userService.deleteUser(uid).join()
+
+        then:
+            result == false
+            0 * historyEventPublisher.publishHistoryDeletedEvent(_)
     }
 
     def "isValidEmail should return true for valid email addresses"() {

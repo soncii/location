@@ -1,13 +1,14 @@
 package com.example.location.services;
 
+import com.example.location.component.HistoryEventPublisher;
 import com.example.location.dto.AccessDTO;
 import com.example.location.dto.UserAccessDto;
 import com.example.location.entities.Access;
-import com.example.location.entities.User;
 import com.example.location.repositories.AccessRepository;
 import com.example.location.repositories.UserRepository;
 import com.example.location.util.BadRequestException;
 import com.example.location.util.NotFoundException;
+import com.example.location.util.Util;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,8 @@ public class AccessServiceImpl implements AccessService {
 
     private final UserRepository userRepository;
 
+    private final HistoryEventPublisher historyEventPublisher;
+
     static final String ACCESS_ADMIN = "admin";
     static final String ACCESS_READ = "read-only";
 
@@ -32,23 +35,30 @@ public class AccessServiceImpl implements AccessService {
 
         return userRepository.findByEmail(accessDTO.getEmail()).thenCompose(user -> {
             if (!user.isPresent()) {
-                log.warn("User not found: {}", accessDTO.getEmail());
-                throw new NotFoundException("User not found");
+                log.warn("User not found: {}", Util.hideEmail(accessDTO.getEmail()));
+                throw new NotFoundException("User");
             }
             return accessRepository.findByUidAndLid(user.get().getUid(), accessDTO.getLid()).thenCompose(access -> {
                 if (access.isPresent()) {
                     Access saving = access.get();
                     if (!saving.getType().equals(accessDTO.getShareMode())) {
                         saving.setType(accessDTO.getShareMode());
-                        log.info("Access mode updated for user {} on location {}", accessDTO.getEmail(),
-                            accessDTO.getLid());
                     }
-                    return accessRepository.save(saving);
+                    return accessRepository.save(saving).thenCompose(saved -> {
+                        log.info("Access mode updated for user {} on location {}",
+                            Util.hideEmail(accessDTO.getEmail()), accessDTO.getLid());
+                        historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), "ACCESS", saved);
+                        return CompletableFuture.completedFuture(saved);
+                    });
                 }
 
-                log.info("New access created for user {} on location {}", accessDTO.getEmail(), accessDTO.getLid());
                 return accessRepository.save(new Access(null, user.get().getUid(), accessDTO.getLid(),
-                    accessDTO.getShareMode()));
+                    accessDTO.getShareMode())).thenCompose(saved -> {
+                    log.info("New access created for user {} on location {}", Util.hideEmail(accessDTO.getEmail()),
+                        accessDTO.getLid());
+                    historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), "ACCESS", saved);
+                    return CompletableFuture.completedFuture(saved);
+                });
             });
         });
     }
@@ -58,7 +68,7 @@ public class AccessServiceImpl implements AccessService {
         return accessRepository.getUserAccessByLocationId(lid);
     }
 
-    public CompletableFuture<Boolean> delete(Long lid, String email) {
+    public CompletableFuture<Boolean> delete(Long uid, Long lid, String email) {
 
         return userRepository.findByEmail(email).thenCompose(user -> {
             if (!user.isPresent()) {
@@ -70,6 +80,7 @@ public class AccessServiceImpl implements AccessService {
             boolean deleted = rows != 0;
             if (deleted) {
                 log.info("Access deleted for user {} on location {}", email, lid);
+                historyEventPublisher.publishHistoryDeletedEvent(uid, "ACCESS", new Access(null, uid, lid, null));
             } else {
                 log.info("No access found for user {} on location {}", email, lid);
             }
@@ -77,24 +88,26 @@ public class AccessServiceImpl implements AccessService {
         });
     }
 
-    public CompletableFuture<Boolean> change(Long lid, String email) {
+    public CompletableFuture<Boolean> change(Long uid, Long lid, String email) {
 
         return userRepository.findByEmail(email).thenCompose(user -> {
             if (!user.isPresent()) {
                 log.warn("User not found: {}", email);
-                return CompletableFuture.completedFuture(Optional.empty());
+                throw new NotFoundException("User");
             }
             return accessRepository.findByUidAndLid(user.get().getUid(), lid);
         }).thenApply(access -> {
             if (!access.isPresent()) {
                 log.warn("No access found for user {} on location {}", email, lid);
-                return false;
+                throw new BadRequestException("Access not found");
             }
 
             Access changedAccess = changeAccess(access.get());
             boolean accessUpdated = accessRepository.update(changedAccess) != null;
-            if (accessUpdated) log.info("Access mode changed for user {} on location {}", email, lid);
-            else log.error("Failed to update access mode for user {} on location {}", email, lid);
+            if (accessUpdated) {
+                log.info("Access mode changed for user {} on location {}", email, lid);
+                historyEventPublisher.publishHistoryUpdatedEvent(uid, "ACCESS", access.get(), changedAccess);
+            } else log.error("Failed to update access mode for user {} on location {}", email, lid);
 
             return accessUpdated;
         });
@@ -109,7 +122,7 @@ public class AccessServiceImpl implements AccessService {
         throw new BadRequestException("Invalid share mode");
     }
 
-    private Access changeAccess(Access a) {
+    public Access changeAccess(Access a) {
 
         if (a.getType().equals(ACCESS_ADMIN)) {
             a.setType(ACCESS_READ);
