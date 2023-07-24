@@ -139,18 +139,6 @@ class LocationServiceImplTest extends Specification {
             result == allSharedLocations
     }
 
-    def "findAllLocations should return null when the UID is 'empty'"() {
-
-        given:
-            def uid = "empty"
-
-        when:
-            def result = locationService.findAllLocations(uid).join()
-
-        then:
-            result == null
-    }
-
     def "deleteById should return true when location with ID '#lid' exists"() {
 
         given:

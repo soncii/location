@@ -6,6 +6,7 @@ import com.example.location.entities.User
 import com.example.location.repositories.LocationRepository
 import com.example.location.repositories.UserRepository
 import com.example.location.services.UserServiceImpl
+import com.example.location.util.DbException
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -139,14 +140,21 @@ class UserServiceImplTest extends Specification {
             1 * historyEventPublisher.publishHistoryDeletedEvent(uid, "USER", uid)
     }
 
-    def "deleteUser should return false and publish event when user does not exist"() {
+    def "deleteUser should return throw exception and don't publish event when user does not exist"() {
 
         given:
             def uid = 2L
             userRepository.deleteById(uid) >> CompletableFuture.completedFuture(false)
 
         when:
-            def result = userService.deleteUser(uid).join()
+            def result = userService.deleteUser(uid).exceptionally({ thrown ->
+
+                if (thrown.cause instanceof DbException) {
+                    return false
+                } else {
+                    throw thrown
+                }
+            }).join()
 
         then:
             result == false
