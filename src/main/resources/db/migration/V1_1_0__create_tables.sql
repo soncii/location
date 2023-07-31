@@ -31,11 +31,11 @@ CREATE TABLE IF NOT EXISTS access (
 -- Create the history table
 CREATE TABLE IF NOT EXISTS history (
                          hid BIGINT AUTO_INCREMENT PRIMARY KEY,
-                         actionBy BIGINT,
-                         objectType VARCHAR(100),
+                         action_by BIGINT,
+                         object_type VARCHAR(100),
                          action VARCHAR(100),
-                         actionDetails VARCHAR(255),
+                         action_details VARCHAR(255),
                          date TIMESTAMP,
-                         FOREIGN KEY (actionBy) REFERENCES users (uid)
+                         FOREIGN KEY (action_By) REFERENCES users (uid)
 );
 

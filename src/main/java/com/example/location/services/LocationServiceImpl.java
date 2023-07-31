@@ -9,6 +9,7 @@ import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
 import com.example.location.util.DbException;
 import com.example.location.util.NotFoundException;
+import com.example.location.util.Util;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -54,7 +55,7 @@ public class LocationServiceImpl implements LocationService {
                     log.error("Location not saved {}", location);
                     throw new DbException();
                 }
-                historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), "LOCATION", saved);
+                historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.LOCATION, saved);
                 return CompletableFuture.completedFuture(saved);
             });
         });
@@ -115,7 +116,7 @@ public class LocationServiceImpl implements LocationService {
                     log.error("Location not deleted for ID: {}", lid);
                     throw new DbException();
                 }
-                historyEventPublisher.publishHistoryDeletedEvent(location.get().getUid(), "LOCATION", location.get());
+                historyEventPublisher.publishHistoryDeletedEvent(location.get().getUid(), Util.ObjectType.LOCATION, location.get());
                 return CompletableFuture.completedFuture(Boolean.TRUE);
             });
         });

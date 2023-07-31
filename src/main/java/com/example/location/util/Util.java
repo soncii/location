@@ -24,4 +24,12 @@ public class Util {
     public static boolean isValidLong(String str) {
         return str.matches("-?\\d+");
     }
+
+    public enum ObjectType {
+        USER, LOCATION, ACCESS
+    }
+
+    public enum ActionType {
+        CREATED, UPDATED, DELETED
+    }
 }

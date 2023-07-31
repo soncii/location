@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
                 log.error("User not saved {}", user);
                 throw new DbException();
             }
-            historyEventPublisher.publishHistoryCreatedEvent(saved.getUid(), "USER", saved);
+            historyEventPublisher.publishHistoryCreatedEvent(saved.getUid(), Util.ObjectType.USER, saved);
             return CompletableFuture.completedFuture(saved);
         });
     }
@@ -80,7 +80,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.deleteById(uid).thenCompose(deleted -> {
             if (deleted) {
                 log.info("User deleted successfully");
-                historyEventPublisher.publishHistoryDeletedEvent(uid, "USER", uid);
+                historyEventPublisher.publishHistoryDeletedEvent(uid, Util.ObjectType.USER, uid);
                 return CompletableFuture.completedFuture(true);
             }
             log.warn("User not found for ID: {}", uid);
