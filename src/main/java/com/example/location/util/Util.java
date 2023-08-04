@@ -1,5 +1,9 @@
 package com.example.location.util;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+
 public class Util {
     public static String hideEmail(String email) {
         if (email == null || email.isEmpty()) {
@@ -21,9 +25,6 @@ public class Util {
             return hiddenUsername + domain;
         }
     }
-    public static boolean isValidLong(String str) {
-        return str.matches("-?\\d+");
-    }
 
     public enum ObjectType {
         USER, LOCATION, ACCESS
@@ -32,4 +33,15 @@ public class Util {
     public enum ActionType {
         CREATED, UPDATED, DELETED
     }
+
+    @Getter
+    @AllArgsConstructor
+    public enum AccessType {
+        ADMIN("admin"),
+        READ("read-only");
+
+        private final String value;
+
+    }
+
 }

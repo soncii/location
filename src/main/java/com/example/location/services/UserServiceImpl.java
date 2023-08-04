@@ -1,7 +1,10 @@
 package com.example.location.services;
 
 import com.example.location.component.HistoryEventPublisher;
+import com.example.location.entities.Access;
+import com.example.location.entities.Location;
 import com.example.location.entities.User;
+import com.example.location.repositories.AccessRepository;
 import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
 import com.example.location.util.DbException;
@@ -22,6 +25,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
+    private final AccessRepository accessRepository;
 
     private final HistoryEventPublisher historyEventPublisher;
 
@@ -68,10 +72,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public CompletableFuture<Boolean> authorizeOwner(String uidString, Long lid) {
+    public CompletableFuture<Boolean> authorizeOwnerOrAdmin(Long uid, Long lid) {
 
-        Long uid = Long.parseLong(uidString);
-        return locationRepository.findByUidAndLid(uid, lid).thenApply(Optional::isPresent);
+        CompletableFuture<Optional<Location>> owner = locationRepository.findByUidAndLid(uid, lid);
+        CompletableFuture<Optional<Access>> admin = accessRepository.findByUidAndLid(uid, lid);
+
+        return owner.thenCombine(admin,
+                (o, a) -> o.isPresent() || a.isPresent() && a.get().getType().equals(Util.AccessType.ADMIN.getValue()))
+            .thenCompose(
+                authorized -> {
+                    if (authorized) {
+                        return CompletableFuture.completedFuture(true);
+                    }
+                    log.warn("User not authorized {uid: {}, lid: {}}", uid, lid);
+                    return CompletableFuture.completedFuture(false);
+                }
+            ).exceptionally(
+                throwable -> {
+                    log.error("Error authorizing user: {}", throwable.getMessage());
+                    return false;
+                }
+            );
     }
 
     @Override

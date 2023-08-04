@@ -2,11 +2,12 @@ package com.example.location.repositories;
 
 import com.example.location.dto.SharedLocation;
 import com.example.location.entities.Location;
+import com.example.location.util.DbException;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
@@ -43,12 +44,20 @@ public class LocationRepositoryImpl implements LocationRepository {
     }
 
     @Override
-    public CompletableFuture<List<SharedLocation>> findAllSharedLocation(Long uid) {
+    public CompletableFuture<List<SharedLocation>> findAllLocations(Long uid) {
 
         return CompletableFuture.supplyAsync(() -> {
-            String sql = "SELECT l.lid, u.email, l.name, l.address, a.type AS accessType " + "FROM location l " +
-                "JOIN access a ON l.lid = a.lid " + "JOIN users u ON u.uid = l.uid " + "WHERE a.uid = ?";
-            return jdbcTemplate.query(sql, new SharedLocationRowMapper(), uid);
+            String sql = "select l.lid, u.email, l.name, l.address, 'owner' as accessType\n" +
+                "from location l\n" +
+                "         inner join users u on u.uid = l.uid\n" +
+                "where l.uid = ?\n" +
+                "UNION\n" +
+                "select l.lid, u.email, l.name, l.address, a.type\n" +
+                "from location l\n" +
+                "    inner join access a on l.lid = a.lid\n" +
+                "    inner join users u on a.uid = u.uid\n" +
+                "where l.lid in (select lid from access where uid = ?);\n";
+            return jdbcTemplate.query(sql, new SharedLocationRowMapper(), uid, uid);
         });
     }
 
@@ -57,17 +66,33 @@ public class LocationRepositoryImpl implements LocationRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "INSERT INTO location (uid, name, address) VALUES (?, ?, ?)";
-            KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(con -> {
+
+            // Prepare the PreparedStatementCreator with RETURN_GENERATED_KEYS option
+            PreparedStatementCreator psc = con -> {
                 PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
                 ps.setLong(1, l.getUid());
                 ps.setString(2, l.getName());
                 ps.setString(3, l.getAddress());
                 return ps;
-            }, keyHolder);
+            };
 
-            Long lid = keyHolder.getKey().longValue();
-            l.setLid(lid);
+            // Execute the update with PreparedStatementCallback to retrieve the generated keys
+            jdbcTemplate.execute(psc, (PreparedStatementCallback<Void>) ps -> {
+                ps.executeUpdate();
+
+                // Retrieve the generated keys from the PreparedStatement
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        long generatedKey = rs.getLong(1);
+                        l.setLid(generatedKey);
+                    }
+                } catch (SQLException ex) {
+                    throw new DbException();
+                }
+
+                return null;
+            });
+
             return l;
         });
     }

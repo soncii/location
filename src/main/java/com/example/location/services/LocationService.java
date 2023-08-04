@@ -10,13 +10,13 @@ import java.util.concurrent.CompletableFuture;
 
 public interface LocationService {
 
-    CompletableFuture<List<LocationDTO>> findUserLocations(String uidString);
+    CompletableFuture<List<LocationDTO>> findUserLocations(Long uid);
 
     CompletableFuture<Location> saveLocation(Location location);
 
     CompletableFuture<Optional<Location>> findById(Long lid);
 
-    CompletableFuture<List<SharedLocation>> findAllLocations(String uid);
+    CompletableFuture<List<SharedLocation>> findAllLocations(Long uid);
 
     CompletableFuture<Boolean> deleteById(Long lid);
 }

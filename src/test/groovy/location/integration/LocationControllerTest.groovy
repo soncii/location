@@ -249,7 +249,7 @@ class LocationControllerTest extends Specification {
                 .andExpect(request().asyncStarted())
                 .andReturn()
         expect:
-            mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isForbidden())
+            mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isOk())
         cleanup:
             jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UIDGuest2)
     }
@@ -267,10 +267,11 @@ class LocationControllerTest extends Specification {
                     .header("Authorization", UidGuest.toString())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(dto)))
-                    .andExpect(request().asyncStarted())
-                    .andReturn()
+                        .andExpect(request().asyncStarted())
+                        .andReturn()
+
             expect:
-                mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isForbidden())
+            mockMvc.perform(MockMvcRequestBuilders.asyncDispatch(request)).andExpect(status().isForbidden())
             cleanup:
                 jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UIDGuest2)
     }

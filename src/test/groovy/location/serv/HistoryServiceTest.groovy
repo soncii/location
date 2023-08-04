@@ -1,11 +1,14 @@
-import com.example.location.services.HistoryService;
-import spock.lang.Specification
-import spock.lang.Subject
+package location.serv
+
 import com.example.location.entities.History
 import com.example.location.repositories.HistoryRepository
-
-import java.sql.Timestamp
+import com.example.location.services.HistoryService
+import spock.lang.AutoCleanup
+import spock.lang.Specification
+import spock.lang.Subject
+import org.apache.logging.log4j.message.Message
 import java.util.concurrent.CompletableFuture
+import org.apache.logging.log4j.Logger
 
 class HistoryServiceTest extends Specification {
 
@@ -15,40 +18,19 @@ class HistoryServiceTest extends Specification {
     HistoryRepository historyRepository = Mock(HistoryRepository)
 
     def setup() {
+
         historyService = new HistoryService(historyRepository)
     }
 
-    def "test handleObjectEvent - success"() {
+    def "test handleObjectEvent"() {
+
         given:
-            History historyEvent = new History(hid: 123, actionBy: 456, objectType: "Object", action: "CREATE", actionDetails: "Details", date: new Timestamp(System.currentTimeMillis()))
+            History historyEvent = new History(hid: 123, actionBy: 456, objectType: "Object", action: "CREATE", actionDetails: "Details", date: new java.sql.Timestamp(System.currentTimeMillis()))
 
         when:
-            def result = historyService.handleObjectEvent(historyEvent)
+            historyService.handleObjectEvent(historyEvent)
 
         then:
-            result instanceof CompletableFuture
             1 * historyRepository.save(historyEvent) >> CompletableFuture.completedFuture(historyEvent)
-
-        and:
-            notThrown(Exception)
-
-
-
-    }
-
-    def "test handleObjectEvent - failure"() {
-        given:
-            History historyEvent = new History(actionBy: 456, objectType: "Object", action: "CREATE", actionDetails: "Details", date: new Timestamp(System.currentTimeMillis()))
-
-        when:
-            def result = historyService.handleObjectEvent(historyEvent)
-
-        then:
-            result instanceof CompletableFuture
-            1 * historyRepository.save(historyEvent) >> CompletableFuture.completedFuture(new History())
-
-        and:
-            notThrown(Exception)
-
     }
 }

@@ -31,9 +31,8 @@ public class LocationServiceImpl implements LocationService {
     private final HistoryEventPublisher historyEventPublisher;
 
     @Override
-    public CompletableFuture<List<LocationDTO>> findUserLocations(String uidString) {
+    public CompletableFuture<List<LocationDTO>> findUserLocations(Long uid) {
 
-        Long uid = Long.parseLong(uidString);
         return locationRepository.findAllByUid(uid).thenApply(locations -> locations
             .stream()
             .map(l -> accessRepository.findAllByLid(l.getLid()).thenApply(list -> new LocationDTO(l, list)))
@@ -75,31 +74,10 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public CompletableFuture<List<SharedLocation>> findAllLocations(String uidStr) throws NumberFormatException{
+    public CompletableFuture<List<SharedLocation>> findAllLocations(Long uid) throws NumberFormatException {
 
-
-        Long uid = Long.parseLong(uidStr);
-        if (uid == null) {
-            log.warn("Invalid user ID: {}", uidStr);
-            return CompletableFuture.completedFuture(null);
-        }
         log.info("Retrieving all locations for UID: {}", uid);
-        return userRepository.findById(uid).thenCompose(user -> {
-            if (!user.isPresent()) {
-                log.warn("User not found for ID: {}", uid);
-                return CompletableFuture.completedFuture(null);
-            }
-            CompletableFuture<List<SharedLocation>> allSharedLocations = locationRepository.findAllSharedLocation(uid);
-            CompletableFuture<List<Location>> ownerLocations = locationRepository.findAllByUid(uid);
-
-            return allSharedLocations.thenCombine(ownerLocations, (shared, owner) -> {
-                List<SharedLocation> modified =
-                    owner.stream().map(location -> CompletableFuture.supplyAsync(() -> new SharedLocation(location,
-                        user.get().getEmail()))).map(CompletableFuture::join).collect(Collectors.toList());
-                shared.addAll(modified);
-                return shared;
-            });
-        });
+        return locationRepository.findAllLocations(uid);
     }
 
     @Override
@@ -116,7 +94,8 @@ public class LocationServiceImpl implements LocationService {
                     log.error("Location not deleted for ID: {}", lid);
                     throw new DbException();
                 }
-                historyEventPublisher.publishHistoryDeletedEvent(location.get().getUid(), Util.ObjectType.LOCATION, location.get());
+                historyEventPublisher.publishHistoryDeletedEvent(location.get().getUid(), Util.ObjectType.LOCATION,
+                    location.get());
                 return CompletableFuture.completedFuture(Boolean.TRUE);
             });
         });

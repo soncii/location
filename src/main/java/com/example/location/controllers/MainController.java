@@ -34,8 +34,8 @@ public class MainController {
 
     @GetMapping("/user/locations")
     @AuthorizationRequired
-    public CompletableFuture<ResponseEntity<List<LocationDTO>>> index(
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "empty") String uid
+    public CompletableFuture<ResponseEntity<List<LocationDTO>>> userLocations(
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = "0") Long uid
     ) {
 
         return locationService.findUserLocations(uid)
@@ -62,9 +62,9 @@ public class MainController {
     }
 
     @DeleteMapping("/user/{uid}")
-    public CompletableFuture<ResponseEntity> deleteUser(@PathVariable("uid") Long uid) {
+    public CompletableFuture<ResponseEntity<Void>> deleteUser(@PathVariable("uid") Long uid) {
 
         return userService.deleteUser(uid)
-            .thenApply(ResponseEntity::ok);
+            .thenApply(result -> ResponseEntity.ok().build());
     }
 }

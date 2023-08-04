@@ -15,7 +15,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -23,14 +22,11 @@ import java.util.concurrent.CompletableFuture;
 @Log4j2
 public class AccessServiceImpl implements AccessService {
 
-    private final AccessRepository accessRepository;
-
-    private final UserRepository userRepository;
-
-    private final HistoryEventPublisher historyEventPublisher;
-
     static final String ACCESS_ADMIN = "admin";
     static final String ACCESS_READ = "read-only";
+    private final AccessRepository accessRepository;
+    private final UserRepository userRepository;
+    private final HistoryEventPublisher historyEventPublisher;
 
     public CompletableFuture<Access> saveAccess(AccessDTO accessDTO) {
 
@@ -48,7 +44,8 @@ public class AccessServiceImpl implements AccessService {
                     return accessRepository.save(saving).thenCompose(saved -> {
                         log.info("Access mode updated for user {} on location {}",
                             Util.hideEmail(accessDTO.getEmail()), accessDTO.getLid());
-                        historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.ACCESS, saved);
+                        historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.ACCESS,
+                            saved);
                         return CompletableFuture.completedFuture(saved);
                     });
                 }
@@ -57,7 +54,8 @@ public class AccessServiceImpl implements AccessService {
                     accessDTO.getShareMode())).thenCompose(saved -> {
                     log.info("New access created for user {} on location {}", Util.hideEmail(accessDTO.getEmail()),
                         accessDTO.getLid());
-                    historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.ACCESS, saved);
+                    historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.ACCESS,
+                        saved);
                     return CompletableFuture.completedFuture(saved);
                 });
             });
@@ -81,7 +79,8 @@ public class AccessServiceImpl implements AccessService {
             boolean deleted = rows != 0;
             if (deleted) {
                 log.info("Access deleted for user {} on location {}", Util.hideEmail(email), lid);
-                historyEventPublisher.publishHistoryDeletedEvent(uid, Util.ObjectType.ACCESS, new Access(null, uid, lid, null));
+                historyEventPublisher.publishHistoryDeletedEvent(uid, Util.ObjectType.ACCESS, new Access(null, uid,
+                    lid, null));
             } else {
                 log.info("No access found for user {} on location {}", Util.hideEmail(email), lid);
             }
@@ -97,31 +96,35 @@ public class AccessServiceImpl implements AccessService {
                 throw new NotFoundException("User");
             }
             return accessRepository.findByUidAndLid(user.get().getUid(), lid);
-        }).thenApply(access -> {
-            if (!access.isPresent()) {
-                log.warn("No access found for user {} on location {}", Util.hideEmail(email), lid);
-                throw new BadRequestException("Access not found");
+        }).thenCompose(access -> {
+                if (!access.isPresent()) {
+                    log.warn("No access found for user {} on location {}", Util.hideEmail(email), lid);
+                    throw new BadRequestException("Access not found");
+                }
+
+                Access changedAccess = changeAccess(access.get());
+                return accessRepository.update(changedAccess).thenApply(
+                    accessUpdated -> {
+                        if (accessUpdated) {
+                            log.info("Access mode changed for user {} on location {}", Util.hideEmail(email), lid);
+                            historyEventPublisher.publishHistoryUpdatedEvent(uid, Util.ObjectType.ACCESS,
+                                access.get(), changedAccess);
+                            return true;
+                        }
+                        log.error("Failed to update access mode for user {} on location {}", Util.hideEmail(email),
+                            lid);
+                        throw new DbException();
+                    });
             }
 
-            Access changedAccess = changeAccess(access.get());
-            boolean accessUpdated = accessRepository.update(changedAccess) != null;
-            if (accessUpdated) {
-                log.info("Access mode changed for user {} on location {}", Util.hideEmail(email), lid);
-                historyEventPublisher.publishHistoryUpdatedEvent(uid, Util.ObjectType.ACCESS, access.get(), changedAccess);
-            } else {
-                log.error("Failed to update access mode for user {} on location {}", Util.hideEmail(email), lid);
-                throw new DbException();
-            }
-
-            return accessUpdated;
-        });
+        );
     }
 
     @Override
-    public Void validateShareMode(String shareMode) {
+    public void validateShareMode(String shareMode) {
 
         if (shareMode.equals(ACCESS_ADMIN) || shareMode.equals(ACCESS_READ)) {
-            return null;
+            return;
         }
         throw new BadRequestException("Invalid share mode");
     }

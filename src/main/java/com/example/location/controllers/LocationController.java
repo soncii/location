@@ -1,7 +1,7 @@
 package com.example.location.controllers;
 
+import com.example.location.annotation.AuthorizationOwner;
 import com.example.location.annotation.AuthorizationRequired;
-import com.example.location.component.HistoryEventPublisher;
 import com.example.location.dto.AccessDTO;
 import com.example.location.dto.SharedLocation;
 import com.example.location.dto.UserLocationDTO;
@@ -10,7 +10,6 @@ import com.example.location.entities.Location;
 import com.example.location.services.AccessService;
 import com.example.location.services.LocationService;
 import com.example.location.services.UserService;
-import com.example.location.util.ForbidException;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpHeaders;
@@ -35,59 +34,49 @@ import java.util.concurrent.CompletableFuture;
 @RequestMapping("/location")
 public class LocationController {
 
+    private static final String EMPTY = "0";
     private final LocationService locationService;
-
     private final AccessService accessService;
-
     private final UserService userService;
-
-    private final HistoryEventPublisher historyEventPublisher;
-
-    private static final String EMPTY = "empty";
-    private static final String LOCATION = "LOCATION";
-    private static final String USER = "USERS";
-    private static final String ACCESS = "ACCESS";
 
     @GetMapping("/{lid}")
     @AuthorizationRequired
+    @AuthorizationOwner
     public CompletableFuture<ResponseEntity<Optional<Location>>> getLocation(
-        @PathVariable("lid") Long lid,
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) Long uid,
+        @PathVariable("lid") Long lid
     ) {
 
-        return userService.authorizeOwner(uid, lid)
-            .thenCompose(authorized -> {
-                if (Boolean.FALSE.equals(authorized)) throw new ForbidException();
-                return locationService.findById(lid).thenApply(ResponseEntity::ok);
-            });
+        return locationService.findById(lid).thenApply(ResponseEntity::ok);
     }
 
     @PostMapping("")
     @AuthorizationRequired
     public CompletableFuture<ResponseEntity<Location>> saveLocation(
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid,
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) Long uid,
         @RequestBody Location location
     ) {
 
-        location.setUid(Long.parseLong(uid));
+        location.setUid(uid);
         return locationService.saveLocation(location).thenApply(saved -> ResponseEntity.status(HttpStatus.CREATED).body(saved));
     }
 
     @DeleteMapping("/{lid}")
     @AuthorizationRequired
-    public CompletableFuture<ResponseEntity> deleteLocation(
-        @PathVariable("lid") Long lid,
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
+    @AuthorizationOwner
+    public CompletableFuture<ResponseEntity<Void>> deleteLocation(
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) Long uid,
+        @PathVariable("lid") Long lid
     ) {
 
         return locationService.deleteById(lid)
-            .thenApply(ResponseEntity::ok);
+            .thenApply(result -> ResponseEntity.ok().build());
     }
 
     @GetMapping("/all")
     @AuthorizationRequired
     public CompletableFuture<ResponseEntity<List<SharedLocation>>> allLocations(
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) Long uid
     ) {
 
         return locationService.findAllLocations(uid).thenApply(ResponseEntity::ok);
@@ -95,8 +84,9 @@ public class LocationController {
 
     @PostMapping("/share")
     @AuthorizationRequired
+    @AuthorizationOwner
     public CompletableFuture<ResponseEntity<Access>> saveShare(
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid,
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) Long uid,
         @RequestBody AccessDTO access
     ) {
 
@@ -106,30 +96,27 @@ public class LocationController {
     }
 
     @PostMapping("/unfriend")
-    public CompletableFuture<ResponseEntity> unfriend(
-        @RequestBody UserLocationDTO userLocation,
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
+    @AuthorizationRequired
+    @AuthorizationOwner
+    public CompletableFuture<ResponseEntity<Void>> unfriend(
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) Long uid,
+        @RequestBody UserLocationDTO userLocation
     ) {
 
-        return userService.authorizeOwner(uid, userLocation.getLid())
-            .thenCompose(authorized -> {
-            if (Boolean.FALSE.equals(authorized)) throw new ForbidException();
-            return accessService.delete(Long.parseLong(uid), userLocation.getLid(), userLocation.getEmail())
-                .thenApply(ResponseEntity::ok);
-        });
+        return accessService.delete(uid, userLocation.getLid(), userLocation.getEmail())
+            .thenApply(result -> ResponseEntity.ok().build());
     }
 
     @PostMapping("/access")
     @AuthorizationRequired
-    public CompletableFuture<ResponseEntity> changeMode(
-        @RequestBody UserLocationDTO userLocation,
-        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) String uid
+    @AuthorizationOwner
+    public CompletableFuture<ResponseEntity<Void>> changeMode(
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, defaultValue = EMPTY) Long uid,
+        @RequestBody UserLocationDTO userLocation
+
     ) {
 
-        return userService.authorizeOwner(uid, userLocation.getLid()).thenCompose(authorized -> {
-            if (Boolean.FALSE.equals(authorized)) throw new ForbidException();
-            return accessService.change(Long.parseLong(uid), userLocation.getLid(), userLocation.getEmail())
-                .thenApply(ResponseEntity::ok);
-        });
+        return accessService.change(uid, userLocation.getLid(), userLocation.getEmail())
+            .thenApply(result -> ResponseEntity.ok().build());
     }
 }

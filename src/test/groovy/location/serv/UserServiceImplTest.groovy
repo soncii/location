@@ -1,12 +1,15 @@
 package location.serv
 
 import com.example.location.component.HistoryEventPublisher
+import com.example.location.entities.Access
 import com.example.location.entities.Location
 import com.example.location.entities.User
+import com.example.location.repositories.AccessRepository
 import com.example.location.repositories.LocationRepository
 import com.example.location.repositories.UserRepository
 import com.example.location.services.UserServiceImpl
 import com.example.location.util.DbException
+import com.example.location.util.Util
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -17,9 +20,11 @@ class UserServiceImplTest extends Specification {
 
     LocationRepository locationRepository = Stub(LocationRepository)
 
+    AccessRepository accessRepository = Stub(AccessRepository)
+
     HistoryEventPublisher historyEventPublisher = Mock(HistoryEventPublisher)
 
-    UserServiceImpl userService = new UserServiceImpl(userRepository, locationRepository, historyEventPublisher)
+    UserServiceImpl userService = new UserServiceImpl(userRepository, locationRepository, accessRepository, historyEventPublisher)
 
     def "authorize should return user when email and password are valid"() {
 
@@ -67,7 +72,7 @@ class UserServiceImplTest extends Specification {
 
         then:
             result == saved
-            1 * historyEventPublisher.publishHistoryCreatedEvent(saved.uid, "USER", saved)
+            1 * historyEventPublisher.publishHistoryCreatedEvent(saved.uid, Util.ObjectType.USER, saved)
     }
 
     def "findUserById should return user optional when the user exists"() {
@@ -98,29 +103,65 @@ class UserServiceImplTest extends Specification {
             result == Optional.empty()
     }
 
-    def "authorizeOwner should return true when uidString is a valid Long and Location exists"() {
+    def "authorizeOwnerOrAdmin should return true when user is owner"() {
 
         given:
-            def uidString = "1"
+            def uid = 1l
             def lid = 1L
             locationRepository.findByUidAndLid(1L, lid) >> CompletableFuture.completedFuture(Optional.of(new Location()))
-
+            accessRepository.findByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(Optional.empty())
         when:
-            def result = userService.authorizeOwner(uidString, lid).join()
+            def result = userService.authorizeOwnerOrAdmin(uid, lid).join()
 
         then:
             result
     }
 
-    def "authorizeOwner should return false when Location does not exist"() {
+    def "authorizeOwnerOrAdmin should return true when user is admin"() {
 
         given:
-            def uidString = "1"
+            def uid = 1L
             def lid = 1L
-            locationRepository.findByUidAndLid(_, _) >> CompletableFuture.completedFuture(Optional.empty())
-
+            locationRepository.findByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(Optional.empty())
+            accessRepository.findByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(Optional.of(new Access(
+                uid: uid,
+                lid: lid,
+                type: Util.AccessType.ADMIN.getValue()
+            )))
         when:
-            def result = userService.authorizeOwner(uidString, lid).join()
+            def result = userService.authorizeOwnerOrAdmin(uid, lid).join()
+
+        then:
+            result
+    }
+
+    def "authorizeOwnerOrAdmin should return false when user is not owner nor shared user"() {
+
+        given:
+            def uid = 1L
+            def lid = 1L
+            locationRepository.findByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(Optional.empty())
+            accessRepository.findByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(Optional.empty())
+        when:
+            def result = userService.authorizeOwnerOrAdmin(uid, lid).join()
+
+        then:
+            !result
+    }
+
+    def "authorizeOwnerOrAdmin should return false when user is not owner but has read only access"() {
+
+        given:
+            def uid = 1L
+            def lid = 1L
+            locationRepository.findByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(Optional.empty())
+            accessRepository.findByUidAndLid(uid, lid) >> CompletableFuture.completedFuture(Optional.of(new Access(
+                uid: uid,
+                lid: lid,
+                type: Util.AccessType.READ.getValue()
+            )))
+        when:
+            def result = userService.authorizeOwnerOrAdmin(uid, lid).join()
 
         then:
             !result
@@ -137,7 +178,7 @@ class UserServiceImplTest extends Specification {
 
         then:
             result == true
-            1 * historyEventPublisher.publishHistoryDeletedEvent(uid, "USER", uid)
+            1 * historyEventPublisher.publishHistoryDeletedEvent(uid, Util.ObjectType.USER, uid)
     }
 
     def "deleteUser should return throw exception and don't publish event when user does not exist"() {

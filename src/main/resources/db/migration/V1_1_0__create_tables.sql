@@ -35,7 +35,6 @@ CREATE TABLE IF NOT EXISTS history (
                          object_type VARCHAR(100),
                          action VARCHAR(100),
                          action_details VARCHAR(255),
-                         date TIMESTAMP,
-                         FOREIGN KEY (action_By) REFERENCES users (uid)
+                         date TIMESTAMP
 );
 
