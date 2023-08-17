@@ -1,6 +1,13 @@
 package com.example.location.configuration;
 
-import com.example.location.repositories.*;
+import com.example.location.repositories.AccessRepository;
+import com.example.location.repositories.AccessRepositoryImpl;
+import com.example.location.repositories.HistoryRepository;
+import com.example.location.repositories.HistoryRepositoryImpl;
+import com.example.location.repositories.LocationRepository;
+import com.example.location.repositories.LocationRepositoryImpl;
+import com.example.location.repositories.UserRepository;
+import com.example.location.repositories.UserRepositoryImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -26,6 +33,12 @@ public class AppConfig {
     public AccessRepository accessRepository(JdbcTemplate jdbcTemplate) {
 
         return new AccessRepositoryImpl(jdbcTemplate);
+    }
+
+    @Bean
+    public HistoryRepository historyRepository(JdbcTemplate jdbcTemplate) {
+
+        return new HistoryRepositoryImpl(jdbcTemplate);
     }
 
     @Bean

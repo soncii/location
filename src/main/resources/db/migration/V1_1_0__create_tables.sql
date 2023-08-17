@@ -28,3 +28,13 @@ CREATE TABLE IF NOT EXISTS access (
                                       CONSTRAINT fk_lid FOREIGN KEY (lid) REFERENCES location(lid)
                                           ON DELETE CASCADE ON UPDATE CASCADE
 );
+-- Create the history table
+CREATE TABLE IF NOT EXISTS history (
+                         hid BIGINT AUTO_INCREMENT PRIMARY KEY,
+                         action_by BIGINT,
+                         object_type VARCHAR(100),
+                         action VARCHAR(100),
+                         action_details VARCHAR(255),
+                         date TIMESTAMP
+);
+

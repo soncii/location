@@ -2,12 +2,10 @@ package com.example.location.repositories;
 
 import com.example.location.dto.SharedLocation;
 import com.example.location.entities.Location;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 public interface LocationRepository {
 
@@ -15,7 +13,7 @@ public interface LocationRepository {
 
     CompletableFuture<Optional<Location>> findByUidAndLid(Long uid, Long lid);
 
-    CompletableFuture<List<SharedLocation>> findAllSharedLocation(@Param("uid") Long uid);
+    CompletableFuture<List<SharedLocation>> findAllLocations(Long uid);
 
     CompletableFuture<Location> save(Location l);
 

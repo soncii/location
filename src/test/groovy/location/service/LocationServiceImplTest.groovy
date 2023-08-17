@@ -1,6 +1,6 @@
-package location.serv
+package location.service
 
-import com.example.location.dto.AccessDTO
+import com.example.location.component.HistoryEventPublisher
 import com.example.location.dto.LocationDTO
 import com.example.location.dto.SharedLocation
 import com.example.location.entities.Location
@@ -9,12 +9,10 @@ import com.example.location.repositories.AccessRepository
 import com.example.location.repositories.LocationRepository
 import com.example.location.repositories.UserRepository
 import com.example.location.services.LocationServiceImpl
-import spock.lang.Shared
+import com.example.location.util.NotFoundException
+import com.example.location.util.Util
 import spock.lang.Specification
 
-import java.util.ArrayList
-import java.util.List
-import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
 class LocationServiceImplTest extends Specification {
@@ -25,12 +23,13 @@ class LocationServiceImplTest extends Specification {
 
     UserRepository userRepository = Stub(UserRepository)
 
-    LocationServiceImpl locationService = new LocationServiceImpl(locationRepository, accessRepository, userRepository)
+    HistoryEventPublisher historyEventPublisher = Mock(HistoryEventPublisher)
+
+    LocationServiceImpl locationService = new LocationServiceImpl(locationRepository, accessRepository, userRepository, historyEventPublisher)
 
     def "findUserLocations should return a list of location DTOs for a given user"() {
 
         given:
-            def uidString = "1"
             def uid = 1L
             def location1 = new Location(uid: uid, name: "Location 1", address: "Address 1")
             def location2 = new Location(uid: uid, name: "Location 2", address: "Address 2")
@@ -40,22 +39,21 @@ class LocationServiceImplTest extends Specification {
             accessRepository.findAllByLid(location2.lid) >> CompletableFuture.completedFuture([])
 
         when:
-            def result = locationService.findUserLocations(uidString).join()
+            def result = locationService.findUserLocations(uid).join()
 
         then:
             result == [new LocationDTO(location1, []),
-                             new LocationDTO(location2, [])]
+                       new LocationDTO(location2, [])]
     }
 
     def "findUserLocations should return an empty list when no locations are found"() {
 
         given:
-            def uidString = "1"
             def uid = 1L
             locationRepository.findAllByUid(uid) >> CompletableFuture.completedFuture(new ArrayList<LocationDTO>())
 
         when:
-            def result = locationService.findUserLocations(uidString).join()
+            def result = locationService.findUserLocations(uid).join()
 
         then:
 
@@ -77,7 +75,7 @@ class LocationServiceImplTest extends Specification {
             def result = locationService.saveLocation(location).join()
 
         then:
-
+            1 * historyEventPublisher.publishHistoryCreatedEvent(uid, Util.ObjectType.LOCATION, location)
             result == new Location(uid: 1L, name: name, address: address)
     }
 
@@ -90,10 +88,18 @@ class LocationServiceImplTest extends Specification {
             userRepository.findById(uid) >> CompletableFuture.completedFuture(Optional.empty())
             def location = new Location(uid, name, address)
         when:
-            def result = locationService.saveLocation(location).join()
+            def result = locationService.saveLocation(location).exceptionally({ throwable ->
+
+                if (throwable.cause instanceof NotFoundException) {
+                    return null
+                } else {
+                    throw throwable
+                }
+            }).join()
 
         then:
             result == null
+            0 * historyEventPublisher.publishHistoryCreatedEvent(_)
     }
 
     def "findById should return the location with the given ID"() {
@@ -114,16 +120,14 @@ class LocationServiceImplTest extends Specification {
     def "findAllLocations should return a list of shared locations for a given user"() {
 
         given:
-            def uid = "1"
+            def uid = 1L
             def uidL = 1L
             def user = new User(uid: 1L, email: "user@example.com")
             def location1 = new Location(uid: uid as Long, name: "Location 1", address: "Address 1")
             def location2 = new Location(uid: uid as Long, name: "Location 2", address: "Address 2")
             def allSharedLocations = [new SharedLocation(location1, user.email),
                                       new SharedLocation(location2, user.email)]
-            userRepository.findById(uidL) >> CompletableFuture.completedFuture(Optional.of(user))
-            locationRepository.findAllSharedLocation(uidL as Long) >> CompletableFuture.completedFuture(allSharedLocations)
-            locationRepository.findAllByUid(uidL as Long) >> CompletableFuture.completedFuture([location1, location2])
+            locationRepository.findAllLocations(uidL) >> CompletableFuture.completedFuture(allSharedLocations)
 
         when:
             def result = locationService.findAllLocations(uid).join()
@@ -132,16 +136,41 @@ class LocationServiceImplTest extends Specification {
             result == allSharedLocations
     }
 
-    def "findAllLocations should return null when the UID is 'empty'"() {
+    def "deleteById should return true when location with ID '#lid' exists"() {
 
         given:
-            def uid = "empty"
+            def locationId = 1L
+            def location = new Location(uid: 1L, name: "Location 1", address: "Address 1")
+            locationRepository.findById(locationId) >> CompletableFuture.completedFuture(Optional.of(location))
+            locationRepository.deleteById(locationId) >> CompletableFuture.completedFuture(Boolean.TRUE)
 
         when:
-            def result = locationService.findAllLocations(uid).join()
+            def result = locationService.deleteById(locationId).join()
 
         then:
+            result == true
+            1 * historyEventPublisher.publishHistoryDeletedEvent(1L, Util.ObjectType.LOCATION, location)
+    }
 
+    def "deleteById should throw NotFoundException when location with ID '#lid' does not exist"() {
+
+        given:
+            def locationId = 1L
+            locationRepository.findById(locationId) >> CompletableFuture.completedFuture(Optional.empty())
+
+        when:
+            def result = locationService.deleteById(locationId).handle({ _, ex ->
+                if (ex.cause instanceof NotFoundException) {
+                    return null
+                } else {
+                    throw ex
+                }
+            }).join()
+
+        then:
             result == null
+            0 * historyEventPublisher.publishHistoryDeletedEvent(_)
     }
 }
+
+

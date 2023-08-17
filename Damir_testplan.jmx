@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.5">
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.2">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
       <stringProp name="TestPlan.comments"></stringProp>
@@ -11,11 +11,11 @@
       <stringProp name="TestPlan.user_define_classpath"></stringProp>
     </TestPlan>
     <hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="register user" enabled="true">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="location_damir" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
-          <boolProp name="LoopController.continue_forever">false</boolProp>
           <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
         </elementProp>
         <stringProp name="ThreadGroup.num_threads">1</stringProp>
         <stringProp name="ThreadGroup.ramp_time">1</stringProp>
@@ -23,8 +23,52 @@
         <stringProp name="ThreadGroup.duration"></stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <boolProp name="ThreadGroup.delayedStart">false</boolProp>
       </ThreadGroup>
       <hashTree>
+        <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <collectionProp name="Arguments.arguments">
+            <elementProp name="host" elementType="Argument">
+              <stringProp name="Argument.name">host</stringProp>
+              <stringProp name="Argument.value">localhost</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="port" elementType="Argument">
+              <stringProp name="Argument.name">port</stringProp>
+              <stringProp name="Argument.value">8081</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="ownerEmail" elementType="Argument">
+              <stringProp name="Argument.name">ownerEmail</stringProp>
+              <stringProp name="Argument.value">ownerjmeter@gmail.com</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="guestEmail" elementType="Argument">
+              <stringProp name="Argument.name">guestEmail</stringProp>
+              <stringProp name="Argument.value">guestjmeter@gmail.com</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="protocol" elementType="Argument">
+              <stringProp name="Argument.name">protocol</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+              <stringProp name="Argument.value">http</stringProp>
+            </elementProp>
+          </collectionProp>
+        </Arguments>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">${token}</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
         <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Registering Users" enabled="true"/>
         <hashTree>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="register User 1" enabled="true">
@@ -46,29 +90,21 @@
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/register</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-Type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="register User 2" enabled="true">
             <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
@@ -88,29 +124,21 @@
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/register</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-Type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
         </hashTree>
         <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Login Users" enabled="true"/>
         <hashTree>
@@ -131,40 +159,29 @@
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/login</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
           <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-Type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name"></stringProp>
-                  <stringProp name="Header.value"></stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
             <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="Regular Expression Extractor" enabled="true">
               <stringProp name="RegexExtractor.useHeaders">true</stringProp>
               <stringProp name="RegexExtractor.refname">token</stringProp>
               <stringProp name="RegexExtractor.regex">Authorization: (.*)</stringProp>
               <stringProp name="RegexExtractor.template">$1$</stringProp>
-              <stringProp name="RegexExtractor.default"></stringProp>
               <stringProp name="RegexExtractor.match_number">1</stringProp>
               <stringProp name="Scope.variable">token</stringProp>
+              <boolProp name="RegexExtractor.default_empty_value">false</boolProp>
             </RegexExtractor>
             <hashTree/>
           </hashTree>
@@ -185,40 +202,29 @@
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/login</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
           <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-Type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name"></stringProp>
-                  <stringProp name="Header.value"></stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
             <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="Regular Expression Extractor" enabled="true">
               <stringProp name="RegexExtractor.useHeaders">true</stringProp>
               <stringProp name="RegexExtractor.refname">tokenGuest</stringProp>
               <stringProp name="RegexExtractor.regex">Authorization: (.*)</stringProp>
               <stringProp name="RegexExtractor.template">$1$</stringProp>
-              <stringProp name="RegexExtractor.default"></stringProp>
               <stringProp name="RegexExtractor.match_number">1</stringProp>
               <stringProp name="Scope.variable">token</stringProp>
+              <boolProp name="RegexExtractor.default_empty_value">false</boolProp>
             </RegexExtractor>
             <hashTree/>
           </hashTree>
@@ -244,32 +250,21 @@
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/location</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
           <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-Type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
             <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
               <stringProp name="JSONPostProcessor.referenceNames">lid</stringProp>
               <stringProp name="JSONPostProcessor.jsonPathExprs">$.lid</stringProp>
@@ -278,107 +273,74 @@
             <hashTree/>
           </hashTree>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Retrieve location by ID" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
               <collectionProp name="Arguments.arguments"/>
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/location/${lid}</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
         </hashTree>
         <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Retrieve Locations" enabled="true"/>
         <hashTree>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Retrieve owner locations of the user" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
               <collectionProp name="Arguments.arguments"/>
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/user/locations</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-Type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Retrieve owner and shared locations of the user" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
               <collectionProp name="Arguments.arguments"/>
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/location/all</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-Type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
         </hashTree>
         <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Share Location" enabled="true">
           <stringProp name="TestPlan.comments">Depends on Create and Retrieve Location</stringProp>
@@ -402,33 +364,21 @@
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/location/share</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Change share mode of location by ID" enabled="true">
             <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
@@ -446,33 +396,21 @@
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/location/access</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Unshare location by ID" enabled="true">
             <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
@@ -489,135 +427,90 @@
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/location/unfriend</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
         </hashTree>
         <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Cleanup" enabled="true"/>
         <hashTree>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete guest by ID" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
               <collectionProp name="Arguments.arguments"/>
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/user/${tokenGuest}</stringProp>
             <stringProp name="HTTPSampler.method">DELETE</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete location by ID" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
               <collectionProp name="Arguments.arguments"/>
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/location/${lid}</stringProp>
             <stringProp name="HTTPSampler.method">DELETE</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete owner by ID" enabled="true">
+            <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
             <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
               <collectionProp name="Arguments.arguments"/>
             </elementProp>
             <stringProp name="HTTPSampler.domain">${host}</stringProp>
             <stringProp name="HTTPSampler.port">${port}</stringProp>
-            <stringProp name="HTTPSampler.protocol"></stringProp>
-            <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+            <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.path">/user/${token}</stringProp>
             <stringProp name="HTTPSampler.method">DELETE</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
             <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
             <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
-            <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
-            <stringProp name="HTTPSampler.connect_timeout"></stringProp>
-            <stringProp name="HTTPSampler.response_timeout"></stringProp>
+            <boolProp name="HTTPSampler.BROWSER_COMPATIBLE_MULTIPART">false</boolProp>
+            <boolProp name="HTTPSampler.image_parser">false</boolProp>
+            <boolProp name="HTTPSampler.concurrentDwn">false</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+            <boolProp name="HTTPSampler.md5">false</boolProp>
+            <intProp name="HTTPSampler.ipSourceType">0</intProp>
           </HTTPSamplerProxy>
-          <hashTree>
-            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
-              <collectionProp name="HeaderManager.headers">
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Authorization</stringProp>
-                  <stringProp name="Header.value">${token}</stringProp>
-                </elementProp>
-                <elementProp name="" elementType="Header">
-                  <stringProp name="Header.name">Content-type</stringProp>
-                  <stringProp name="Header.value">application/json</stringProp>
-                </elementProp>
-              </collectionProp>
-            </HeaderManager>
-            <hashTree/>
-          </hashTree>
+          <hashTree/>
         </hashTree>
         <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
@@ -655,31 +548,6 @@
           </objProp>
           <stringProp name="filename"></stringProp>
         </ResultCollector>
-        <hashTree/>
-        <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
-          <collectionProp name="Arguments.arguments">
-            <elementProp name="host" elementType="Argument">
-              <stringProp name="Argument.name">host</stringProp>
-              <stringProp name="Argument.value">localhost</stringProp>
-              <stringProp name="Argument.metadata">=</stringProp>
-            </elementProp>
-            <elementProp name="port" elementType="Argument">
-              <stringProp name="Argument.name">port</stringProp>
-              <stringProp name="Argument.value">8081</stringProp>
-              <stringProp name="Argument.metadata">=</stringProp>
-            </elementProp>
-            <elementProp name="ownerEmail" elementType="Argument">
-              <stringProp name="Argument.name">ownerEmail</stringProp>
-              <stringProp name="Argument.value">ownerjmeter@gmail.com</stringProp>
-              <stringProp name="Argument.metadata">=</stringProp>
-            </elementProp>
-            <elementProp name="guestEmail" elementType="Argument">
-              <stringProp name="Argument.name">guestEmail</stringProp>
-              <stringProp name="Argument.value">guestjmeter@gmail.com</stringProp>
-              <stringProp name="Argument.metadata">=</stringProp>
-            </elementProp>
-          </collectionProp>
-        </Arguments>
         <hashTree/>
       </hashTree>
     </hashTree>

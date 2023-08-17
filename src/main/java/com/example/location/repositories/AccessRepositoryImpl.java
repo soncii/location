@@ -2,14 +2,17 @@ package com.example.location.repositories;
 
 import com.example.location.dto.UserAccessDto;
 import com.example.location.entities.Access;
+import com.example.location.util.DbException;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +23,22 @@ import java.util.concurrent.CompletableFuture;
 public class AccessRepositoryImpl implements AccessRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final RowMapper<Access> accessRowMapper = (rs, rowNum) -> {
+        Access access = new Access();
+        access.setAid(rs.getLong("aid"));
+        access.setUid(rs.getLong("uid"));
+        access.setLid(rs.getLong("lid"));
+        access.setType(rs.getString("type"));
+        return access;
+    };
+    private final RowMapper<UserAccessDto> userDtoRowMapper = (rs, rowNum) -> {
+        UserAccessDto dto = new UserAccessDto();
+        dto.setAccessType(rs.getString("type"));
+        dto.setEmail(rs.getString("email"));
+        dto.setFirstName(rs.getString("firstname"));
+        dto.setLastName(rs.getString("lastname"));
+        return dto;
+    };
 
     @Override
     public CompletableFuture<List<Access>> findAllByLid(Long lid) {
@@ -65,19 +84,28 @@ public class AccessRepositoryImpl implements AccessRepository {
 
         return CompletableFuture.supplyAsync(() -> {
             String sql = "INSERT INTO access (uid, lid, type) VALUES (?, ?, ?)";
-            KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(connection -> {
+
+            PreparedStatementCreator psc = connection -> {
                 PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
                 ps.setLong(1, a.getUid());
                 ps.setLong(2, a.getLid());
                 ps.setString(3, a.getType());
                 return ps;
-            }, keyHolder);
+            };
 
-            if (keyHolder.getKey() != null) {
-                long generatedKey = keyHolder.getKey().longValue();
-                a.setAid(generatedKey);
-            }
+            jdbcTemplate.execute(psc, (PreparedStatementCallback<Void>) ps -> {
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        long generatedKey = rs.getLong(1);
+                        a.setAid(generatedKey);
+                    }
+                } catch (SQLException ex) {
+                    throw new DbException("Could not save access");
+                }
+
+                return null;
+            });
 
             return a;
         });
@@ -92,22 +120,4 @@ public class AccessRepositoryImpl implements AccessRepository {
             return update != 0;
         });
     }
-
-    private final RowMapper<Access> accessRowMapper = (rs, rowNum) -> {
-        Access access = new Access();
-        access.setAid(rs.getLong("aid"));
-        access.setUid(rs.getLong("uid"));
-        access.setLid(rs.getLong("lid"));
-        access.setType(rs.getString("type"));
-        return access;
-    };
-
-    private final RowMapper<UserAccessDto> userDtoRowMapper = (rs, rowNum) -> {
-        UserAccessDto dto = new UserAccessDto();
-        dto.setAccessType(rs.getString("type"));
-        dto.setEmail(rs.getString("email"));
-        dto.setFirstName(rs.getString("firstname"));
-        dto.setLastName(rs.getString("lastname"));
-        return dto;
-    };
 }

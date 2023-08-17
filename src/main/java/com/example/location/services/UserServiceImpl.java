@@ -1,8 +1,15 @@
 package com.example.location.services;
 
+import com.example.location.component.HistoryEventPublisher;
+import com.example.location.entities.Access;
+import com.example.location.entities.Location;
 import com.example.location.entities.User;
+import com.example.location.repositories.AccessRepository;
 import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
+import com.example.location.util.BadRequestException;
+import com.example.location.util.DbException;
+import com.example.location.util.Util;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -19,18 +26,24 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final LocationRepository locationRepository;
+    private final AccessRepository accessRepository;
+
+    private final HistoryEventPublisher historyEventPublisher;
 
     @Override
     public CompletableFuture<Optional<User>> authorize(String email, String password) {
 
+
+
+        log.info("Logging in user with email: {}", Util.hideEmail(email));
         if (email == null || password == null) {
             log.warn("Invalid email or password");
-            return CompletableFuture.completedFuture(Optional.empty());
+            throw new BadRequestException("Invalid email or password");
         }
 
         if (!isValidEmail(email)) {
             log.warn("Invalid email format: {}", email);
-            return CompletableFuture.completedFuture(Optional.empty());
+            throw new BadRequestException("Invalid email format");
         }
 
         return userRepository.findByEmailAndPassword(email, password);
@@ -39,12 +52,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public CompletableFuture<User> insertUser(User user) {
 
+        log.info("Registering user with email: {}", Util.hideEmail(user.getEmail()));
         if (isEmpty(user)) {
             log.warn("User is empty");
-            CompletableFuture.completedFuture(user);
+            throw new BadRequestException("Fill all fields");
         }
 
-        return userRepository.save(user);
+        return userRepository.save(user).thenApply(saved -> {
+            if (saved.getUid() == null) {
+                log.error("User not saved {}", user);
+                throw new DbException("User not saved");
+            }
+            historyEventPublisher.publishHistoryCreatedEvent(saved.getUid(), Util.ObjectType.USER, saved);
+            return saved;
+        });
     }
 
     @Override
@@ -54,17 +75,41 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public CompletableFuture<Boolean> authorizeOwner(String uidString, Long lid) {
+    public CompletableFuture<Boolean> authorizeOwnerOrAdmin(Long uid, Long lid) {
 
-        Long uid = Long.parseLong(uidString);
-        if (uid == null) return CompletableFuture.completedFuture(false);
-        return locationRepository.findByUidAndLid(uid, lid).thenApply(Optional::isPresent);
+        CompletableFuture<Optional<Location>> owner = locationRepository.findByUidAndLid(uid, lid);
+        CompletableFuture<Optional<Access>> admin = accessRepository.findByUidAndLid(uid, lid);
+
+        return owner.thenCombine(admin,
+                (o, a) -> o.isPresent() || a.isPresent() && a.get().getType().equals(Util.AccessType.ADMIN.getValue()))
+            .thenCompose(
+                authorized -> {
+                    if (authorized) {
+                        return CompletableFuture.completedFuture(true);
+                    }
+                    log.warn("User not authorized {uid: {}, lid: {}}", uid, lid);
+                    return CompletableFuture.completedFuture(false);
+                }
+            ).exceptionally(
+                throwable -> {
+                    log.error("Error authorizing user: {}", throwable.getMessage());
+                    return false;
+                }
+            );
     }
 
     @Override
     public CompletableFuture<Boolean> deleteUser(Long uid) {
 
-        return userRepository.deleteById(uid);
+        return userRepository.deleteById(uid).thenApply(isDeleted -> {
+            if (!isDeleted) {
+                log.warn("User not found for ID: {}", uid);
+                throw new DbException("Could not delete user");
+            }
+            log.info("User deleted successfully");
+            historyEventPublisher.publishHistoryDeletedEvent(uid, Util.ObjectType.USER, uid);
+            return isDeleted;
+        });
     }
 
     private boolean isEmpty(User user) {
