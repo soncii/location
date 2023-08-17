@@ -229,12 +229,4 @@ class MainControllerTest extends Specification {
             response.contentAsString != null
             response.contentAsString == "Authorization header is missing"
     }
-
-    //    def "cleanupSpecCustom"() {
-    //
-    //        def update = jdbcTemplate.update("DELETE FROM users WHERE uid = ?", UID)
-    //        print("Deleted " + update + " users")
-    //        expect:
-    //            update == 1
-    //    }
 }

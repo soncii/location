@@ -2,8 +2,8 @@ package com.example.location.util;
 
 public class DbException extends RuntimeException {
 
-    public DbException() {
+    public DbException(String msg) {
 
-        super("Could not interact with database");
+        super(msg);
     }
 }

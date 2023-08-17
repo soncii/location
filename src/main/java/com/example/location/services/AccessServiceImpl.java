@@ -36,27 +36,22 @@ public class AccessServiceImpl implements AccessService {
                 throw new NotFoundException("User");
             }
             return accessRepository.findByUidAndLid(user.get().getUid(), accessDTO.getLid()).thenCompose(access -> {
+                Access saving;
                 if (access.isPresent()) {
-                    Access saving = access.get();
-                    if (!saving.getType().equals(accessDTO.getShareMode())) {
-                        saving.setType(accessDTO.getShareMode());
-                    }
-                    return accessRepository.save(saving).thenCompose(saved -> {
-                        log.info("Access mode updated for user {} on location {}",
-                            Util.hideEmail(accessDTO.getEmail()), accessDTO.getLid());
-                        historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.ACCESS,
-                            saved);
-                        return CompletableFuture.completedFuture(saved);
-                    });
+                    saving = access.get();
+                    saving.setType(accessDTO.getShareMode());
+                    historyEventPublisher.publishHistoryUpdatedEvent(user.get().getUid(), Util.ObjectType.ACCESS,
+                        access.get(), saving);
+                } else {
+                    saving = new Access(null, user.get().getUid(), accessDTO.getLid(), accessDTO.getShareMode());
+                    historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.ACCESS,
+                        saving);
                 }
 
-                return accessRepository.save(new Access(null, user.get().getUid(), accessDTO.getLid(),
-                    accessDTO.getShareMode())).thenCompose(saved -> {
+                return accessRepository.save(saving).thenApply(saved -> {
                     log.info("New access created for user {} on location {}", Util.hideEmail(accessDTO.getEmail()),
                         accessDTO.getLid());
-                    historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.ACCESS,
-                        saved);
-                    return CompletableFuture.completedFuture(saved);
+                    return saved;
                 });
             });
         });
@@ -113,7 +108,7 @@ public class AccessServiceImpl implements AccessService {
                         }
                         log.error("Failed to update access mode for user {} on location {}", Util.hideEmail(email),
                             lid);
-                        throw new DbException();
+                        throw new DbException("Couldn't update access mode");
                     });
             }
 

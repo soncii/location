@@ -7,6 +7,7 @@ import com.example.location.entities.User;
 import com.example.location.repositories.AccessRepository;
 import com.example.location.repositories.LocationRepository;
 import com.example.location.repositories.UserRepository;
+import com.example.location.util.BadRequestException;
 import com.example.location.util.DbException;
 import com.example.location.util.Util;
 import lombok.AllArgsConstructor;
@@ -32,15 +33,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public CompletableFuture<Optional<User>> authorize(String email, String password) {
 
+
+
         log.info("Logging in user with email: {}", Util.hideEmail(email));
         if (email == null || password == null) {
             log.warn("Invalid email or password");
-            return CompletableFuture.completedFuture(Optional.empty());
+            throw new BadRequestException("Invalid email or password");
         }
 
         if (!isValidEmail(email)) {
             log.warn("Invalid email format: {}", email);
-            return CompletableFuture.completedFuture(Optional.empty());
+            throw new BadRequestException("Invalid email format");
         }
 
         return userRepository.findByEmailAndPassword(email, password);
@@ -52,16 +55,16 @@ public class UserServiceImpl implements UserService {
         log.info("Registering user with email: {}", Util.hideEmail(user.getEmail()));
         if (isEmpty(user)) {
             log.warn("User is empty");
-            CompletableFuture.completedFuture(user);
+            throw new BadRequestException("Fill all fields");
         }
 
-        return userRepository.save(user).thenCompose(saved -> {
+        return userRepository.save(user).thenApply(saved -> {
             if (saved.getUid() == null) {
                 log.error("User not saved {}", user);
-                throw new DbException();
+                throw new DbException("User not saved");
             }
             historyEventPublisher.publishHistoryCreatedEvent(saved.getUid(), Util.ObjectType.USER, saved);
-            return CompletableFuture.completedFuture(saved);
+            return saved;
         });
     }
 
@@ -98,14 +101,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public CompletableFuture<Boolean> deleteUser(Long uid) {
 
-        return userRepository.deleteById(uid).thenCompose(deleted -> {
-            if (deleted) {
-                log.info("User deleted successfully");
-                historyEventPublisher.publishHistoryDeletedEvent(uid, Util.ObjectType.USER, uid);
-                return CompletableFuture.completedFuture(true);
+        return userRepository.deleteById(uid).thenApply(isDeleted -> {
+            if (!isDeleted) {
+                log.warn("User not found for ID: {}", uid);
+                throw new DbException("Could not delete user");
             }
-            log.warn("User not found for ID: {}", uid);
-            throw new DbException();
+            log.info("User deleted successfully");
+            historyEventPublisher.publishHistoryDeletedEvent(uid, Util.ObjectType.USER, uid);
+            return isDeleted;
         });
     }
 

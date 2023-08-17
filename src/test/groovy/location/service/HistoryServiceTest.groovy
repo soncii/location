@@ -1,14 +1,12 @@
-package location.serv
+package location.service
 
 import com.example.location.entities.History
 import com.example.location.repositories.HistoryRepository
 import com.example.location.services.HistoryService
-import spock.lang.AutoCleanup
 import spock.lang.Specification
 import spock.lang.Subject
-import org.apache.logging.log4j.message.Message
+
 import java.util.concurrent.CompletableFuture
-import org.apache.logging.log4j.Logger
 
 class HistoryServiceTest extends Specification {
 

@@ -1,4 +1,4 @@
-package location.serv
+package location.service
 
 
 import com.example.location.entities.Access

@@ -1,4 +1,4 @@
-package location.serv
+package location.service
 
 import com.example.location.component.HistoryEventPublisher
 import com.example.location.dto.AccessDTO
@@ -29,7 +29,7 @@ class AccessServiceImplTest extends Specification {
         User user = new User(uid: 1L, email: email)
         def lid = 1L, aid = 1L
         def dto = new AccessDTO(lid, email, shareMode)
-        def access = new Access(aid: aid, uid: user.uid, lid: lid, type: shareMode)
+        def access = new Access(aid: null, uid: user.uid, lid: lid, type: shareMode)
 
         given:
             accessRepository.save(_ as Access) >> CompletableFuture.completedFuture(access)

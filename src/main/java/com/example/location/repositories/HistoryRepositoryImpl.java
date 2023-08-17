@@ -44,7 +44,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
                         history.setHid(generatedKey);
                     }
                 } catch (SQLException ex) {
-                    throw new DbException();
+                    throw new DbException("Could not save history");
                 }
 
                 return null;

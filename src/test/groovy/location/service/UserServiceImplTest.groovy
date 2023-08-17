@@ -1,4 +1,4 @@
-package location.serv
+package location.service
 
 import com.example.location.component.HistoryEventPublisher
 import com.example.location.entities.Access
@@ -8,6 +8,7 @@ import com.example.location.repositories.AccessRepository
 import com.example.location.repositories.LocationRepository
 import com.example.location.repositories.UserRepository
 import com.example.location.services.UserServiceImpl
+import com.example.location.util.BadRequestException
 import com.example.location.util.DbException
 import com.example.location.util.Util
 import spock.lang.Specification
@@ -42,22 +43,22 @@ class UserServiceImplTest extends Specification {
             result.get() == expectedUser
     }
 
-    def "authorize should return empty optional when email is null"() {
+    def "authorize should throw BadRequestException when email is null"() {
 
         when:
-            def result = userService.authorize(null, "password").join()
+            userService.authorize(null, "password").join()
 
         then:
-            !result.isPresent()
+            thrown(BadRequestException)
     }
 
-    def "authorize should return empty optional when password is null"() {
+    def "authorizeshould throw BadRequestException  when password is null"() {
 
         when:
-            def result = userService.authorize("test@example.com", null).join()
+            userService.authorize("test@example.com", null).join()
 
         then:
-            !result.isPresent()
+            thrown(BadRequestException)
     }
 
     def "insertUser should save the user when it is not empty"() {

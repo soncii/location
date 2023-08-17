@@ -86,7 +86,7 @@ public class UserRepositoryImpl implements UserRepository {
                         user.setUid(generatedKey);
                     }
                 } catch (SQLException ex) {
-                    throw new DbException();
+                    throw new DbException("Could not save user");
                 }
 
                 return null;

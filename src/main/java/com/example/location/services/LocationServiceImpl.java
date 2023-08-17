@@ -35,7 +35,7 @@ public class LocationServiceImpl implements LocationService {
 
         return locationRepository.findAllByUid(uid).thenApply(locations -> locations
             .stream()
-            .map(l -> accessRepository.findAllByLid(l.getLid()).thenApply(list -> new LocationDTO(l, list)))
+            .map(location -> accessRepository.findAllByLid(location.getLid()).thenApply(list -> new LocationDTO(location, list)))
             .map(CompletableFuture::join)
             .collect(Collectors.toList()));
     }
@@ -49,13 +49,13 @@ public class LocationServiceImpl implements LocationService {
                 log.warn("User not found for ID: {}", location.getUid());
                 throw new NotFoundException("User");
             }
-            return locationRepository.save(location).thenCompose(saved -> {
+            return locationRepository.save(location).thenApply(saved -> {
                 if (saved.getUid() == null) {
                     log.error("Location not saved {}", location);
-                    throw new DbException();
+                    throw new DbException("Could not save location");
                 }
                 historyEventPublisher.publishHistoryCreatedEvent(user.get().getUid(), Util.ObjectType.LOCATION, saved);
-                return CompletableFuture.completedFuture(saved);
+                return saved;
             });
         });
     }
@@ -89,14 +89,14 @@ public class LocationServiceImpl implements LocationService {
                 log.warn("Location not found for ID: {}", lid);
                 throw new NotFoundException("Location");
             }
-            return locationRepository.deleteById(lid).thenCompose(deleted -> {
-                if (Boolean.FALSE.equals(deleted)) {
+            return locationRepository.deleteById(lid).thenApply(isDeleted -> {
+                if (!isDeleted) {
                     log.error("Location not deleted for ID: {}", lid);
-                    throw new DbException();
+                    throw new DbException("Could not delete location");
                 }
                 historyEventPublisher.publishHistoryDeletedEvent(location.get().getUid(), Util.ObjectType.LOCATION,
                     location.get());
-                return CompletableFuture.completedFuture(Boolean.TRUE);
+                return isDeleted;
             });
         });
     }

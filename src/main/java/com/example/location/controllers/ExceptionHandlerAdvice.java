@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.NoSuchElementException;
+import java.util.concurrent.CompletionException;
 
 @RestControllerAdvice
 public class ExceptionHandlerAdvice {
@@ -25,6 +26,7 @@ public class ExceptionHandlerAdvice {
         if (ex instanceof UnauthorizedException) status = HttpStatus.UNAUTHORIZED;
         if (ex instanceof NoSuchElementException) status = HttpStatus.NOT_FOUND;
         if (ex instanceof NotFoundException) status = HttpStatus.NOT_FOUND;
+        if (ex instanceof CompletionException && ex.getCause() instanceof ForbidException) status = HttpStatus.FORBIDDEN;
         return ResponseEntity.status(status).body(ex.getMessage());
     }
 }

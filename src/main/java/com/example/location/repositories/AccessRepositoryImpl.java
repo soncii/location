@@ -101,7 +101,7 @@ public class AccessRepositoryImpl implements AccessRepository {
                         a.setAid(generatedKey);
                     }
                 } catch (SQLException ex) {
-                    throw new DbException();
+                    throw new DbException("Could not save access");
                 }
 
                 return null;

@@ -87,7 +87,7 @@ public class LocationRepositoryImpl implements LocationRepository {
                         l.setLid(generatedKey);
                     }
                 } catch (SQLException ex) {
-                    throw new DbException();
+                    throw new DbException("Could not save location");
                 }
 
                 return null;
